@@ -29,8 +29,8 @@ function BannerModal({ id, onClose }: { id?: string; onClose: () => void }) {
   return (
     <Modal size="lg" eyebrow="Quảng cáo" title={cur ? `Sửa banner · ${cur.id}` : 'Thêm banner'} onClose={onClose}
       footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Thêm banner'}</Button></>}>
-      <ImagePicker max={2200} quality={0.92} title="Ảnh bìa banner" name={title || 'Banner mới'} cat="Game" value={image} onChange={setImage} />
-      <p className="bn-hint">Gợi ý: ảnh bìa ngang (tỉ lệ khoảng 16:5, ví dụ 1920×600; web giữ tối đa 2200px để ảnh sắc nét). Chưa có ảnh thì banner dùng nền hiệu ứng theo màu đã chọn.</p>
+      <ImagePicker max={2560} quality={0.96} title="Ảnh bìa banner" name={title || 'Banner mới'} cat="Game" value={image} onChange={setImage} />
+      <p className="bn-hint">Gợi ý: ảnh bìa ngang (tỉ lệ khoảng 16:5, ví dụ 1920×600; web giữ tối đa 2560px để ảnh sắc nét). Chưa có ảnh thì banner dùng nền hiệu ứng theo màu đã chọn.</p>
       <div className="form-grid" style={{ marginTop: 8 }}>
         <TextField label="Nhãn" value={tag} onChange={setTag} placeholder="GAME MỚI, SỰ KIỆN…" />
         <TextField label="Chữ trên nút" value={cta} onChange={setCta} placeholder="Xem ngay" />

@@ -1,32 +1,76 @@
-# Website quản lý quán net – Nhóm Alt F4 (Lớp 242101TH001)
-PHP 8+ (PDO) · MySQL 5.7+/8 (utf8mb4, transaction) · HTML/CSS/JS thuần.
+# AltF4 Gaming Center — Giao diện quản lý quán net
 
-## Cài đặt
-1. Chép thư mục vào htdocs (XAMPP) hoặc chạy `php -S localhost:8000` trong thư mục dự án.
-2. Sửa `config.php` (host, user, mật khẩu MySQL).
-3. Mở `/install.php` một lần (trang chủ `index.php` là trang giới thiệu, hệ thống ở `app.php`) → tạo CSDL + dữ liệu mẫu. **Sau đó xóa `install.php`.**
-4. Đăng nhập `/login.php`: `admin/Admin@123` · `quanly/Quanly@123` · `thungan/Thungan@123` (đổi mật khẩu ngay).
+React 19 + Vite + Tailwind v4 (giữ nguyên bộ khung Figma Make). Phong cách HUD/cyber của bản thiết kế Figma, bổ sung
+**light / dark mode**, **hiệu ứng chuyển trang**, ripple khi click, spotlight theo con trỏ, đếm số động, biểu đồ có animation…
+
+## Chạy dự án
+```bash
+pnpm install      # hoặc npm install
+pnpm dev          # http://localhost:8443
+pnpm build        # build production vào dist/
+```
+
+## Tài khoản dùng thử (khớp README của backend PHP)
+| Vai trò | Tên đăng nhập | Mật khẩu |
+|---|---|---|
+| Thu ngân | `thungan` | `Thungan@123` |
+| Quản lý | `quanly` | `Quanly@123` |
+| Quản trị viên | `admin` | `Admin@123` |
+
+Có thể đổi nhanh vai trò ở menu hồ sơ (góc phải trên) để xem phân quyền.
+Nhân sự mẫu: thu ngân **Lê Nhật Duy**, quản lý **Trương Thiện Thư**, quản trị viên **Lê Chí Toàn**.
+Phím tắt: **Ctrl/⌘ + K** tìm nhanh · **Ctrl/⌘ + B** đóng/mở thanh bên.
+
+## Bản cập nhật 2.5 (AltF4)
+- **Trang Tổng hợp** (`#/hub`): thẻ "đèn chiếu" dẫn tới mọi trang, tự lọc theo quyền, kèm số liệu nhanh.
+- **Thanh bên thu gọn**: nút tròn ở mép sidebar / nút trên topbar / Ctrl+B; nhớ lựa chọn; tooltip khi thu gọn; mobile là ngăn kéo.
+- **Loader** vòng xoay + chữ nhảy (tối ưu: chỉ animate transform/opacity, hỗ trợ light/dark và giảm chuyển động).
+- **Sản phẩm dạng menu có ảnh**: thêm/đổi/xóa ảnh (bấm, kéo-thả hoặc dán), tự nén; chưa có ảnh thì dùng tranh minh họa; ảnh hiện cả ở màn gọi món; chuyển nhanh giữa dạng menu/bảng.
+- **Tựa game có sẵn** (đầu trang Tổng hợp, xếp một hàng ngang kéo trái/phải): thẻ sóng chuyển động, thông tin gọn ở dưới để lộ ảnh; Quản lý/Quản trị viên thêm, sửa, xóa game và gắn ảnh riêng (chọn màu thẻ, khu máy cài đặt).
+- **Vệt sét theo con trỏ**: rê chuột trên màn hình để lại tia sét mờ dần (tự tắt với giảm chuyển động và màn hình cảm ứng).
+- Yếu tố gaming-art: logo phím Alt+F4, tiêu đề glitch, góc HUD, hoa văn lục giác, thông số cấu hình máy, chỉ báo ping.
 
 ## Chức năng (8 nhóm theo báo cáo)
-| Nhóm | Trang | Vai trò tối thiểu |
-|---|---|---|
-| Đăng nhập, đổi mật khẩu, phân quyền | login, password | Thu ngân |
-| Máy & phiên: trạng thái, mở/kết thúc, tính phí, chuyển máy | machines | Thu ngân (sửa giờ/máy/đơn giá: Quản lý) |
-| Hội viên & ví: đăng ký, nạp tiền, lịch sử, số dư ≥ 0, cảnh báo thấp | members | Thu ngân |
-| Đồ ăn & đơn hàng (giá lưu tại thời điểm bán) | orders | Thu ngân |
-| Kho: nhập, kiểm kê, nhà cung cấp, cảnh báo sắp hết | inventory | Quản lý |
-| Hóa đơn: tiền mặt/trừ ví/chuyển khoản, không xóa, hoàn tiền | invoices | Thu ngân (hoàn: Quản lý) |
-| Bảo trì: báo sự cố, phân công, đóng phiếu | maintenance | Thu ngân (xử lý: Quản lý) |
-| Báo cáo: doanh thu, lượt dùng máy, tồn kho, CSV, in | reports | Quản lý |
-| Nhân viên & phân quyền | staff | Quản lý |
-| Ca làm việc: mở/kết ca, đối chiếu tiền mặt | shifts | Thu ngân |
-| Cấu hình quy tắc phí, nhật ký, sao lưu/phục hồi | system | Quản trị viên |
+| Trang | Việc làm được |
+|---|---|
+| Sơ đồ máy | Trạng thái realtime, mở phiên (hội viên/vãng lai), gọi món, chuyển máy, kết thúc & thanh toán (tiền mặt/ví/chuyển khoản, tiền thừa, hóa đơn) |
+| Phiên sử dụng | Lịch sử + phiên đang mở, tính phí trực tiếp |
+| Đơn hàng | Tạo đơn vào phiên hoặc bán lẻ tại quầy, phục vụ/hủy (hoàn tồn kho) |
+| Hội viên | Đăng ký, nạp ví, khóa/mở khóa, cảnh báo số dư thấp |
+| Hóa đơn | Danh sách, hoàn tiền có lý do (Quản lý), không xóa |
+| Ca làm việc | Mở ca, kết ca, đối chiếu tiền mặt & chênh lệch |
+| Bảo trì | Báo sự cố (máy → bảo trì), đóng phiếu (máy → trống) |
+| Tổng hợp | Lối tắt tới mọi trang theo quyền |
+| Sản phẩm / Kho | Menu có ảnh, thêm/sửa SP + ảnh, nhập kho, kiểm kê/điều chỉnh (bắt buộc lý do), nhà cung cấp |
+| Nhân viên | Thêm, khóa/mở, phân quyền 3 cấp |
+| Dashboard / Báo cáo | Biểu đồ 7 ngày, cảnh báo, công suất, top SP; **xuất CSV thật**, in báo cáo |
+| Cấu hình / Nhật ký / Sao lưu | Quy tắc phí, đơn giá, giao diện; audit log tự ghi; sao lưu & phục hồi (xác nhận) |
 
-## Bảo mật
-PDO prepared statements · password_hash/verify · CSRF token mọi form POST · kiểm tra quyền phía máy chủ (index.php + từng hành động) · transaction + khóa dòng (`FOR UPDATE`) chống mở 2 phiên/bán vượt tồn/lệch số dư · audit log · hóa đơn không xóa.
+**Quy tắc nghiệp vụ đã cài** (theo README backend): phí tối thiểu 15 phút, làm tròn lên phút, tiền làm tròn lên 100đ;
+đơn giá lưu lúc mở phiên; số dư ví ≥ 0; tồn kho ≥ 0; không có máy mở 2 phiên; hóa đơn không xóa; kiểm tra quyền theo vai trò.
 
-## Quy tắc tính phí
-Giờ lấy từ máy chủ (MySQL `NOW()`); tối thiểu `min_minutes` phút (mặc định 15), làm tròn lên phút, tiền làm tròn lên 100đ; đơn giá lưu lúc mở phiên.
+## Cấu trúc
+```
+src/
+  App.tsx              Đăng nhập, shell (sidebar/topbar), command palette, chuyển trang
+  components/
+    ui.tsx             Logo, Loader, ProductArt, Icon, Button, Field, Modal, Toast, DataTable, CountUp, hiệu ứng ripple/spotlight
+    theme.tsx          Light/Dark + hiệu ứng loang tròn (View Transitions API)
+    modals.tsx         Mở phiên, thanh toán, gọi món, nạp ví, đăng ký hội viên
+  lib/
+    store.tsx          Toàn bộ nghiệp vụ (mỗi action trả {ok,msg})
+    data.ts            Dữ liệu mẫu    types.ts / format.ts / nav.ts
+  pages/               16 trang chức năng
+  styles/
+    tokens.css         Màu 2 theme (sửa palette ở đây)
+    base.css  components.css  pages.css  motion.css (toàn bộ keyframes)  gaming.css (loader, tổng hợp, menu ảnh, gaming-art)
+```
 
-## Sao lưu định kỳ
-`php cron_backup.php` (cron / Task Scheduler) → file trong `backups/`.
+## Nối với backend PHP (InternetCafe)
+Dữ liệu hiện là dữ liệu mẫu trong bộ nhớ (reload là reset). Mỗi hàm trong `src/lib/store.tsx` tương ứng 1 action PHP
+(`machines.php?a=open|close|move`, `members`, `orders`, `inventory`, `invoices`, `maintenance`, `shifts`…).
+Khi nối API: thay thân hàm bằng `fetch('/api/...')` và giữ nguyên kiểu trả về `{ ok, msg }` — giao diện không cần sửa.
+
+## Tuỳ biến nhanh
+- Đổi bảng màu: `src/styles/tokens.css` (khối `:root` = dark, `:root[data-theme='light']` = light).
+- Tắt/giảm animation: tự động theo cài đặt "Reduce motion" của hệ điều hành.

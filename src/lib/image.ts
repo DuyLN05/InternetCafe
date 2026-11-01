@@ -1,3 +1,5 @@
+import { isBackend, uploadImage } from './remote'
+
 /** Nén ảnh người dùng chọn → data URL JPEG/WebP nhỏ gọn (tối đa 640px) để lưu trong state */
 export function compressImage(file: File, max = 640, quality = 0.84): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -20,4 +22,13 @@ export function compressImage(file: File, max = 640, quality = 0.84): Promise<st
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Không đọc được ảnh này.')) }
     img.src = url
   })
+}
+
+/** Nén ảnh rồi — nếu đang chạy với XAMPP — tải lên thư mục data/uploads, trả về đường dẫn ngắn để lưu vào dữ liệu */
+export async function prepareImage(file: File, max = 800, quality = 0.88): Promise<string> {
+  const d = await compressImage(file, max, quality)
+  if (!isBackend()) return d
+  const name = await uploadImage(d)
+  if (!name) throw new Error('Không tải được ảnh lên máy chủ (kiểm tra XAMPP đã bật Apache và quyền ghi thư mục data/uploads).')
+  return name
 }

@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { Button, Icon, Modal, PageHead, SelectField, TextArea, TextField, useToast } from '../components/ui'
 import { vnd } from '../lib/format'
+import { imgSrc } from '../lib/remote'
 import { NAV, type PageId } from '../lib/nav'
 import { shiftTotals, useStore } from '../lib/store'
 import { roleRank, type Game } from '../lib/types'
+import BannerSection from './Banners'
 import { ImagePicker } from './Catalog'
 
 const GROUP_TONE: Record<string, string> = {
@@ -56,6 +58,7 @@ export default function Hub({ go }: { go: (p: PageId) => void }) {
   return (
     <>
       <PageHead eyebrow="TỔNG HỢP · LỐI TẮT" title={`${greet}, ${user.name.split(' ').slice(-1)[0]}`} sub="Chọn một khu vực để bắt đầu — thẻ sẽ sáng lên khi bạn di chuột vào." />
+      <BannerSection />
       <GamesSection />
       <div className="hub-strip">
         <div><small>MÁY ĐANG DÙNG</small><strong>{using}<i>/{state.machines.length}</i></strong></div>
@@ -85,8 +88,8 @@ const ZONES: Game['zone'][] = ['Tất cả máy', 'Khu VIP', 'Khu thường']
 
 function GameCard({ g, canEdit, onEdit, onDelete }: { g: Game; canEdit: boolean; onEdit: () => void; onDelete: () => void }) {
   return (
-    <article className={`e-card playing tone-${g.tone} ${g.image ? 'has-img' : ''}`}>
-      {g.image && <img className="image" src={g.image} alt="" draggable={false} loading="lazy" />}
+    <article data-gid={g.id} className={`e-card playing tone-${g.tone} ${g.image ? 'has-img' : ''}`}>
+      {g.image && <img className="image" src={imgSrc(g.image)} alt="" draggable={false} loading="lazy" />}
       <div className="wave" /><div className="wave" /><div className="wave" />
       <div className="shade" />
       <div className="g-info">
@@ -122,7 +125,7 @@ function GameModal({ id, onClose }: { id?: string; onClose: () => void }) {
   return (
     <Modal size="lg" eyebrow="Thư viện game" title={cur ? `Sửa game · ${cur.id}` : 'Thêm game'} onClose={onClose}
       footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Thêm game'}</Button></>}>
-      <ImagePicker name={name || 'Game mới'} cat="Game" value={image} onChange={setImage} />
+      <ImagePicker max={1000} quality={0.9} title="Ảnh game" name={name || 'Game mới'} cat="Game" value={image} onChange={setImage} />
       <div className="form-grid" style={{ marginTop: 18 }}>
         <div style={{ gridColumn: '1 / -1' }}><TextField label="Tên game" value={name} onChange={setName} autoFocus={!cur} placeholder="VD: Dota 2" /></div>
         <TextField label="Thể loại" value={genre} onChange={setGenre} placeholder="VD: MOBA, FPS…" />

@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { seed } from './data'
+import { fetchState, pushState } from './remote'
 import { calcFee, dmy, norm, pad, vnd } from './format'
-import { roleRank, type Game, type Invoice, type LogEntry, type OrderLine, type Machine, type Member, type PayMethod, type Product, type Role, type Session, type State, type User } from './types'
+import { roleRank, type Banner, type Game, type Invoice, type LogEntry, type OrderLine, type Machine, type Member, type PayMethod, type Product, type Role, type Session, type State, type User } from './types'
 
 /* ============================================================
    Store — toàn bộ nghiệp vụ quán net ở phía giao diện (dữ liệu mẫu).
@@ -46,7 +47,7 @@ export function weekStats(s: State) {
 }
 
 /* ---------- context ---------- */
-interface Ctx { state: State; user: User; act: ReturnType<typeof makeActions> }
+interface Ctx { state: State; user: User; act: ReturnType<typeof makeActions>; saveError: boolean; resetAll: () => void; mode: 'php' | 'local'; notice: { n: number; text: string } }
 const StoreCtx = createContext<Ctx | null>(null)
 const NowCtx = createContext<number>(Date.now())
 
@@ -66,20 +67,97 @@ function NowProvider({ children }: { children: ReactNode }) {
   return <NowCtx.Provider value={now}>{children}</NowCtx.Provider>
 }
 
-export function StoreProvider({ user, children }: { user: User; children: ReactNode }) {
-  const [state, setState] = useState<State>(seed)
+/* ---------- lưu trữ bền vững: XAMPP (data/state.json) hoặc localStorage ---------- */
+const KEY = 'altf4-state-v1'
+export function loadLocalState(): State {
+  try {
+    const raw = localStorage.getItem(KEY)
+    if (raw) {
+      const p = JSON.parse(raw) as { v: number; state: State }
+      if (p?.v === 1 && p.state && Array.isArray(p.state.machines) && Array.isArray(p.state.products)) return { ...seed(), ...p.state }
+    }
+  } catch { /* dữ liệu hỏng → dùng dữ liệu mẫu */ }
+  return seed()
+}
+export const clearSavedState = () => { try { localStorage.removeItem(KEY) } catch { /* bỏ qua */ } }
+export const savedStateSize = () => { try { return (localStorage.getItem(KEY) ?? '').length } catch { return 0 } }
+export const mergeState = (s: State): State => ({ ...seed(), ...s })
+
+export interface Boot { mode: 'php' | 'local'; state: State; rev: number }
+
+export function StoreProvider({ user, boot, children }: { user: User; boot: Boot; children: ReactNode }) {
+  const php = boot.mode === 'php'
+  const [state, setState] = useState<State>(boot.state)
+  const [saveError, setSaveError] = useState(false)
+  const [notice, setNotice] = useState<{ n: number; text: string }>({ n: 0, text: '' })
   const ref = useRef(state)
   const userRef = useRef(user)
+  const timer = useRef(0)
+  const rev = useRef(boot.rev)
+  const saving = useRef(false)
+  const again = useRef(false)
   userRef.current = user
+  const say = (text: string) => setNotice((o) => ({ n: o.n + 1, text }))
+  const apply = (s: State, r: number) => { ref.current = s; rev.current = r; setState(s) }
+
+  const flush = useCallback(async () => {
+    window.clearTimeout(timer.current); timer.current = 0
+    if (!php) {
+      try { localStorage.setItem(KEY, JSON.stringify({ v: 1, state: ref.current })); setSaveError(false) } catch { setSaveError(true) }
+      return
+    }
+    if (saving.current) { again.current = true; return }
+    saving.current = true
+    try {
+      const r = await pushState(rev.current, ref.current)
+      if (r && 'ok' in r) { rev.current = r.rev; setSaveError(false) }
+      else if (r && 'conflict' in r) {
+        const d = await fetchState()
+        if (d?.state) { apply(mergeState(d.state), d.rev); say('Dữ liệu vừa được máy khác cập nhật — thao tác của bạn chưa lưu, hãy làm lại.') }
+      } else setSaveError(true)
+    } finally {
+      saving.current = false
+      if (again.current) { again.current = false; void flush() }
+    }
+  }, [php])
+
   const commit = (fn: (s: State) => State) => {
     const n = fn(ref.current)
     ref.current = n
     setState(n)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => void flush(), php ? 350 : 250)
   }
+  // lưu nốt khi đóng tab; lần đầu chưa có state.json trên máy chủ → tạo ngay từ dữ liệu mẫu
+  useEffect(() => {
+    if (php && boot.rev === 0) void flush()
+    const on = () => { if (timer.current) void flush() }
+    window.addEventListener('beforeunload', on)
+    document.addEventListener('visibilitychange', on)
+    return () => { window.removeEventListener('beforeunload', on); document.removeEventListener('visibilitychange', on); on() }
+  }, [flush, php, boot.rev])
+  // nhiều máy dùng chung: định kỳ kiểm tra bản mới trên máy chủ
+  useEffect(() => {
+    if (!php) return
+    const id = window.setInterval(async () => {
+      if (document.hidden || timer.current || saving.current) return
+      const d = await fetchState(rev.current)
+      if (!d || d.unchanged || !d.state || d.rev === rev.current || timer.current || saving.current) return
+      apply(mergeState(d.state), d.rev)
+      say('Đã đồng bộ dữ liệu mới từ máy khác.')
+    }, 6000)
+    return () => window.clearInterval(id)
+  }, [php])
+  const resetAll = useCallback(() => {
+    window.clearTimeout(timer.current); timer.current = 0
+    clearSavedState()
+    const n = seed(); ref.current = n; setState(n)
+    void flush()
+  }, [flush])
   const actRef = useRef<ReturnType<typeof makeActions>>(undefined as never)
   actRef.current = makeActions(ref, commit, userRef)
   return (
-    <StoreCtx.Provider value={{ state, user, act: actRef.current }}>
+    <StoreCtx.Provider value={{ state, user, act: actRef.current, saveError, resetAll, mode: boot.mode, notice }}>
       <NowProvider>{children}</NowProvider>
     </StoreCtx.Provider>
   )
@@ -283,6 +361,29 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       if (!p) return fail('Sản phẩm không tồn tại.')
       commit((x) => addLog({ ...x, products: x.products.map((q) => (q.id === id ? { ...q, image } : q)) }, image ? 'Cập nhật ảnh' : 'Xóa ảnh', id, p.name))
       return ok(image ? `Đã cập nhật ảnh cho ${p.name}.` : `Đã xóa ảnh của ${p.name}.`)
+    },
+    /* ---- Banner quảng cáo ---- */
+    addBanner(a: Omit<Banner, 'id'>): Result {
+      if (!can('Quản lý')) return denied()
+      if (a.title.trim().length < 3) return fail('Vui lòng nhập tiêu đề banner (ít nhất 3 ký tự).')
+      const s = ref.current
+      const id = `BN-${String(Math.max(0, ...s.banners.map((b) => parseInt(b.id.slice(3), 10))) + 1).padStart(3, '0')}`
+      commit((x) => addLog({ ...x, banners: [...x.banners, { ...a, id, title: a.title.trim(), tag: a.tag.trim() || 'MỚI', subtitle: a.subtitle.trim(), cta: a.cta.trim() }] }, 'Thêm banner', id, a.title.trim()))
+      return ok(`Đã thêm banner ${a.title.trim()}.`, id)
+    },
+    updateBanner(a: Banner): Result {
+      if (!can('Quản lý')) return denied()
+      if (!ref.current.banners.some((b) => b.id === a.id)) return fail('Banner không tồn tại.')
+      if (a.title.trim().length < 3) return fail('Vui lòng nhập tiêu đề banner (ít nhất 3 ký tự).')
+      commit((x) => addLog({ ...x, banners: x.banners.map((b) => (b.id === a.id ? { ...a, title: a.title.trim(), tag: a.tag.trim() || 'MỚI', subtitle: a.subtitle.trim(), cta: a.cta.trim() } : b)) }, 'Sửa banner', a.id, a.title.trim()))
+      return ok('Đã cập nhật banner.')
+    },
+    deleteBanner(id: string): Result {
+      if (!can('Quản lý')) return denied()
+      const b = ref.current.banners.find((x) => x.id === id)
+      if (!b) return fail('Banner không tồn tại.')
+      commit((x) => addLog({ ...x, banners: x.banners.filter((q) => q.id !== id) }, 'Xóa banner', id, b.title))
+      return ok(`Đã xóa banner ${b.title}.`)
     },
     /* ---- Tựa game ---- */
     addGame(a: Omit<Game, 'id'>): Result {

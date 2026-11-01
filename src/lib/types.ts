@@ -123,7 +123,20 @@ export interface Game {
   image?: string
 }
 
+export interface Banner {
+  id: string
+  tag: string
+  title: string
+  subtitle: string
+  cta: string
+  tone: Game['tone']
+  image?: string
+  /** Game liên kết: bấm nút sẽ cuộn tới thẻ game này */
+  gameId?: string
+}
+
 export interface State {
+  banners: Banner[]
   games: Game[]
   machines: Machine[]
   sessions: Session[]

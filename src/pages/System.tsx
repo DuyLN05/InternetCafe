@@ -2,12 +2,42 @@ import { useState } from 'react'
 import { useTheme } from '../components/theme'
 import { Badge, Button, DataTable, Icon, Modal, NumberField, PageHead, SearchBox, SelectField, TextField, useToast, type Col } from '../components/ui'
 import { norm, num, stamp } from '../lib/format'
-import { useStore } from '../lib/store'
+import { savedStateSize, useStore } from '../lib/store'
 import type { Backup, LogEntry } from '../lib/types'
 
 /* ============================================================
    Cấu hình
    ============================================================ */
+function DataCard() {
+  const { state, resetAll, saveError, mode } = useStore()
+  const toast = useToast()
+  const [ask, setAsk] = useState(false)
+  const kb = Math.round(savedStateSize() / 1024)
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob); a.download = `altf4_du_lieu_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+  return (
+    <div className="card">
+      <div className="card-head"><div><span className="eyebrow">Lưu trữ</span><strong>Dữ liệu trên trình duyệt</strong></div><Icon name="database" /></div>
+      <div className="info-note" style={{ marginTop: 0 }}><Icon name={saveError ? 'alert' : 'check'} size={15} /> {saveError ? 'Không lưu được dữ liệu — kiểm tra Apache đang chạy và quyền ghi thư mục data (hoặc bộ nhớ trình duyệt đã đầy).' : mode === 'php' ? 'Đang lưu vào máy chủ XAMPP: tệp data/state.json và thư mục data/uploads. Commit thư mục data lên Git để chia sẻ dữ liệu.' : `Chưa kết nối XAMPP — đang lưu tạm trên trình duyệt này (${kb} KB). Xem README để chạy cùng XAMPP.`}</div>
+      <div className="info-note"><Icon name="info" size={15} /> {mode === 'php' ? 'Nhiều máy cùng mở web sẽ tự đồng bộ sau vài giây.' : 'Dữ liệu chỉ nằm trong trình duyệt này, máy khác sẽ không thấy.'}</div>
+      <div className="button-row" style={{ marginTop: 14 }}>
+        <Button tone="secondary" icon="download" onClick={exportJson}>Xuất dữ liệu (JSON)</Button>
+        <Button tone="danger" icon="undo" onClick={() => setAsk(true)}>Đặt lại dữ liệu mẫu</Button>
+      </div>
+      {ask && (
+        <Modal size="sm" eyebrow="Cảnh báo" title="Đặt lại toàn bộ dữ liệu?" onClose={() => setAsk(false)}
+          footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button tone="danger" onClick={() => { resetAll(); toast({ ok: true, msg: 'Đã khôi phục dữ liệu mẫu ban đầu.' }); close() }}>Đặt lại</Button></>}>
+          <p>Tất cả hội viên, đơn hàng, hóa đơn, sản phẩm, game, banner… bạn đã thêm sẽ bị xóa và quay về dữ liệu mẫu. Nên xuất dữ liệu trước.</p>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
 export function Settings() {
   const { state, act } = useStore()
   const { theme, setTheme } = useTheme()
@@ -47,6 +77,7 @@ export function Settings() {
           </div>
           <div className="info-note"><Icon name="info" size={15} /> Ví dụ: 20 phút ở khu VIP = {num(example)} ₫. Đơn giá của phiên được lưu lúc mở và không đổi khi cấu hình mới có hiệu lực.</div>
         </div>
+        <DataCard />
         <div className="card">
           <div className="card-head"><div><span className="eyebrow">Giao diện</span><strong>Chế độ hiển thị</strong></div><Icon name={theme === 'dark' ? 'moon' : 'sun'} /></div>
           <div className="theme-cards">

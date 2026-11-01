@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Badge, Button, DataTable, Icon, Modal, NumberField, ProductArt, PageHead, SearchBox, SelectField, Stat, Tabs, TextField, useToast, type Col } from '../components/ui'
 import { norm, num, stamp, vnd } from '../lib/format'
-import { compressImage } from '../lib/image'
+import { prepareImage } from '../lib/image'
 import { useStore } from '../lib/store'
 import { roleRank, type Product, type StockMove, type Supplier } from '../lib/types'
 
@@ -29,7 +29,7 @@ export function Products() {
   const pickQuick = (id: string) => { quickId.current = id; quick.current?.click() }
   const onQuickFile = async (f?: File) => {
     if (!f) return
-    try { toast(act.setProductImage(quickId.current, await compressImage(f))) } catch (e) { toast({ ok: false, msg: (e as Error).message }) }
+    try { toast(act.setProductImage(quickId.current, await prepareImage(f))) } catch (e) { toast({ ok: false, msg: (e as Error).message }) }
     if (quick.current) quick.current.value = ''
   }
 
@@ -93,7 +93,7 @@ export function Products() {
 }
 
 /** Chọn ảnh: bấm, kéo-thả hoặc dán (Ctrl+V) */
-export function ImagePicker({ name, cat, value, onChange }: { name: string; cat: string; value?: string; onChange: (v?: string) => void }) {
+export function ImagePicker({ name, cat, value, onChange, title = 'Ảnh sản phẩm', max, quality }: { name: string; cat: string; value?: string; onChange: (v?: string) => void; title?: string; max?: number; quality?: number }) {
   const toast = useToast()
   const input = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
@@ -101,7 +101,7 @@ export function ImagePicker({ name, cat, value, onChange }: { name: string; cat:
   const take = async (f?: File | null) => {
     if (!f) return
     setBusy(true)
-    try { onChange(await compressImage(f)) } catch (e) { toast({ ok: false, msg: (e as Error).message }) }
+    try { onChange(await prepareImage(f, max, quality)) } catch (e) { toast({ ok: false, msg: (e as Error).message }) }
     setBusy(false)
     if (input.current) input.current.value = ''
   }
@@ -116,7 +116,7 @@ export function ImagePicker({ name, cat, value, onChange }: { name: string; cat:
         <span className="img-hint"><Icon name="upload" size={18} />{busy ? 'Đang xử lý…' : value ? 'Bấm để đổi ảnh' : 'Bấm, kéo thả hoặc dán ảnh'}</span>
       </div>
       <div className="img-side">
-        <strong>Ảnh sản phẩm</strong>
+        <strong>{title}</strong>
         <p>JPG, PNG hoặc WebP. Ảnh vuông hoặc ngang 4:3 hiển thị đẹp nhất — hệ thống tự nén cho nhẹ.</p>
         <div className="button-row">
           <Button tone="secondary" size="sm" icon="upload" onClick={() => input.current?.click()}>{value ? 'Chọn ảnh khác' : 'Tải ảnh lên'}</Button>

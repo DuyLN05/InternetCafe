@@ -1,0 +1,11 @@
+{
+  "description": "Hệ thống quản lý quán net: sơ đồ máy realtime, phiên sử dụng, hội viên & ví, đơn hàng, kho, hóa đơn, ca làm việc, bảo trì và báo cáo — giao diện sáng/tối.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  },
+  "title": "AltF4 Gaming Center · Quản lý quán net"
+}

@@ -141,6 +141,11 @@ export function seed(): State {
       { id: 'NV-0413', memberId: 'HV-00209', amount: 300000, method: 'transfer', time: ago(310), shiftId },
     ],
     stockMoves, suppliers, shift, shifts, backups, history,
+    banners: [
+      { id: 'BN-001', tag: 'GAME MỚI', title: 'Valorant · Mùa giải mới', subtitle: 'Màn hình 240Hz tại khu VIP — đặt máy cho cả đội ngay hôm nay.', cta: 'Xem game', tone: 'magenta' as const, gameId: 'GM-002' },
+      { id: 'BN-002', tag: 'SỰ KIỆN', title: 'Giải đấu cuối tuần AltF4 Cup', subtitle: 'Counter-Strike 2 · 5v5 · Tổng giải thưởng 5.000.000 ₫.', cta: 'Tìm hiểu', tone: 'amber' as const, gameId: 'GM-003' },
+      { id: 'BN-003', tag: 'KHUYẾN MÃI', title: 'Nạp 200K tặng 20K', subtitle: 'Áp dụng cho hội viên nạp ví trong tuần này, đồ uống giảm 10%.', cta: 'Chơi ngay', tone: 'cyan' as const },
+    ],
     games: [
       { id: 'GM-001', name: 'Liên Minh Huyền Thoại', genre: 'MOBA', desc: 'Đấu trường 5v5 chiến thuật, phòng đội hình sẵn cho nhóm bạn.', zone: 'Tất cả máy' as const, tone: 'cyan' as const },
       { id: 'GM-002', name: 'Valorant', genre: 'FPS chiến thuật', desc: 'Bắn súng 5v5 đòi hỏi phản xạ nhanh, màn hình 240Hz ở khu VIP.', zone: 'Khu VIP' as const, tone: 'magenta' as const },

@@ -27,6 +27,7 @@ Phím tắt: **Ctrl/⌘ + K** tìm nhanh · **Ctrl/⌘ + B** đóng/mở thanh b
 - **Loader** vòng xoay + chữ nhảy (tối ưu: chỉ animate transform/opacity, hỗ trợ light/dark và giảm chuyển động).
 - **Sản phẩm dạng menu có ảnh**: thêm/đổi/xóa ảnh (bấm, kéo-thả hoặc dán), tự nén; chưa có ảnh thì dùng tranh minh họa; ảnh hiện cả ở màn gọi món; chuyển nhanh giữa dạng menu/bảng.
 - **Tựa game có sẵn** (đầu trang Tổng hợp, xếp một hàng ngang kéo trái/phải): thẻ sóng chuyển động, thông tin gọn ở dưới để lộ ảnh; Quản lý/Quản trị viên thêm, sửa, xóa game và gắn ảnh riêng (chọn màu thẻ, khu máy cài đặt).
+- **Banner quảng cáo** (trên hàng game): cỡ ảnh bìa, tự chạy có thanh tiến trình, hiệu ứng parallax, ken-burns, quét sáng, chữ neon; thêm/sửa/xóa, gắn ảnh bìa và liên kết tới game (bấm nút để cuộn tới thẻ game).
 - **Vệt sét theo con trỏ**: rê chuột trên màn hình để lại tia sét mờ dần (tự tắt với giảm chuyển động và màn hình cảm ứng).
 - Yếu tố gaming-art: logo phím Alt+F4, tiêu đề glitch, góc HUD, hoa văn lục giác, thông số cấu hình máy, chỉ báo ping.
 
@@ -66,11 +67,20 @@ src/
     base.css  components.css  pages.css  motion.css (toàn bộ keyframes)  gaming.css (loader, tổng hợp, menu ảnh, gaming-art)
 ```
 
-## Nối với backend PHP (InternetCafe)
-Dữ liệu hiện là dữ liệu mẫu trong bộ nhớ (reload là reset). Mỗi hàm trong `src/lib/store.tsx` tương ứng 1 action PHP
-(`machines.php?a=open|close|move`, `members`, `orders`, `inventory`, `invoices`, `maintenance`, `shifts`…).
-Khi nối API: thay thân hàm bằng `fetch('/api/...')` và giữ nguyên kiểu trả về `{ ok, msg }` — giao diện không cần sửa.
+## Lưu dữ liệu bằng XAMPP (dữ liệu đi theo Git)
+Web tự phát hiện API PHP trong thư mục `api/`. Có XAMPP → toàn bộ dữ liệu được ghi vào **`data/state.json`** và ảnh vào
+**`data/uploads/`** (không cần MySQL). Commit thư mục `data/` lên Git thì người khác `git pull` về là có đúng dữ liệu đó.
 
-## Tuỳ biến nhanh
-- Đổi bảng màu: `src/styles/tokens.css` (khối `:root` = dark, `:root[data-theme='light']` = light).
-- Tắt/giảm animation: tự động theo cài đặt "Reduce motion" của hệ điều hành.
+1. Clone/copy cả dự án vào `C:\xampp\htdocs\altf4` (tên thư mục tuỳ ý) rồi bật **Apache** trong XAMPP.
+2. Build: `npm install` rồi `npm run build:xampp` (tạo thư mục `dist/` với đường dẫn tương đối).
+3. Mở **http://localhost/altf4/** (tự chuyển sang `dist/`; nếu chưa build sẽ hiện hướng dẫn) hoặc trực tiếp **http://localhost/altf4/dist/** — đăng nhập, mọi thay đổi tự lưu vào `data/`.
+4. Đẩy lên Git: `git add data && git commit -m "Cập nhật dữ liệu" && git push`. Người khác pull, build, mở web là thấy dữ liệu.
+
+Chạy `npm run dev` (Vite, cổng 8443) vẫn dùng được cùng XAMPP: Vite chuyển `/api` và `/data` sang `http://localhost/altf4/`
+(đặt biến môi trường `XAMPP_DIR` nếu thư mục trong htdocs không tên `altf4`). Không có XAMPP thì web tự lưu tạm vào localStorage.
+
+Ghi chú:
+- Nhiều máy cùng mở web (cùng XAMPP) tự đồng bộ sau ~6 giây; nếu hai người lưu cùng lúc, bản đến sau được báo "hãy làm lại".
+- Cần quyền ghi cho thư mục `data/` (mặc định XAMPP trên Windows đã ghi được).
+- Đây là lưu trữ dạng tệp cho đồ án: API chưa có xác thực — đừng mở ra Internet. Muốn dùng MySQL của dự án InternetCafe thì thay
+  `api/state.php` bằng các endpoint tương ứng với từng hàm trong `src/lib/store.tsx`.

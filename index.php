@@ -1,49 +1,35 @@
 <?php
-session_start();
-$in=!empty($_SESSION['u']);
-$feat=[['Máy & phiên','Xem trạng thái từng máy, mở/kết thúc phiên, tính phí tự động theo quy tắc, chuyển máy giữa phiên.'],['Hội viên & ví','Đăng ký, nạp tiền, trừ ví khi thanh toán. Số dư không bao giờ âm, mọi giao dịch đều có lịch sử.'],['Đồ ăn & đơn hàng','Danh mục và giá bán, giá được lưu tại thời điểm bán nên đổi giá không làm sai hóa đơn cũ.'],['Kho','Nhập/xuất, kiểm kê, nhà cung cấp; cảnh báo hàng sắp hết và chặn bán vượt tồn.'],['Hóa đơn','Tiền mặt, trừ ví hoặc chuyển khoản. Hóa đơn không xóa được, chỉ quản lý mới hoàn tiền.'],['Bảo trì','Báo sự cố, phân công, đóng phiếu. Máy đang bảo trì không thể mở phiên.'],['Báo cáo','Doanh thu theo ngày và phương thức, lượt dùng máy, tồn kho; xuất CSV hoặc in.'],['Nhân viên & bảo mật','Phân quyền 3 cấp, nhật ký thao tác, sao lưu và phục hồi dữ liệu.']];
-$roles=[['Thu ngân','Vận hành hằng ngày','Xem trạng thái máy, mở/kết thúc phiên, đăng ký và nạp tiền hội viên, tạo đơn, thanh toán, báo sự cố, mở/kết ca.'],['Quản lý','Thêm toàn bộ quyền Thu ngân','Quản lý máy, đơn giá, sản phẩm, kho, nhà cung cấp, nhân viên; điều chỉnh/hoàn tiền; xử lý bảo trì; xem báo cáo.'],['Quản trị viên','Thêm toàn bộ quyền Quản lý','Cấu hình hệ thống và quy tắc tính phí, xem nhật ký thao tác, sao lưu và phục hồi dữ liệu.']];
-$pc=['b','a','b','m','a','a','b','a','b','b','a','a'];$lab=['a'=>'Trống','b'=>'Đang dùng','m'=>'Bảo trì'];
-?><!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quản lý quán net · Alt F4</title><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap" rel="stylesheet">
+// Trang vào khi mở http://localhost/<thư-mục>/ trong XAMPP:
+// tự chuyển sang bản đã build (dist/) hoặc hướng dẫn build nếu chưa có.
+$dist = __DIR__ . '/dist/index.html';
+$problem = null;
+if (!is_file($dist)) {
+    $problem = 'missing';
+} else {
+    $html = (string)file_get_contents($dist);
+    if (preg_match('#(src|href)="/assets/#', $html)) $problem = 'absolute';
+}
+if ($problem === null) { header('Location: dist/'); exit; }
+http_response_code(200);
+?><!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AltF4 Gaming Center · Cần build</title>
 <style>
-:root{--ink:#1d2433;--mut:#5d6679;--bg:#f1f3f7;--navy:#1e2a4a;--acc:#2f5bea;--ok:#16874a;--busy:#c26a00;--bad:#c62d2d;--line:#dde2ec}
-*{box-sizing:border-box}body{margin:0;font:16px/1.6 'Be Vietnam Pro',system-ui,sans-serif;color:var(--ink);background:var(--bg)}
-a{color:inherit}.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
-header.top{background:var(--navy);color:#fff}header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
-.logo{font-weight:800;font-size:19px}.logo small{font-weight:400;opacity:.7;margin-left:8px;font-size:13px}
-.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:500}.btn.ghost{background:transparent;border:1px solid #ffffff55}.btn.light{background:#fff;color:var(--navy)}
-.hero{background:var(--navy);color:#fff;padding:56px 0 72px}.hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center}
-h1{font-size:clamp(32px,5vw,52px);line-height:1.12;margin:0 0 18px;font-weight:800;letter-spacing:-.5px}.hero p{color:#c9d2ee;max-width:46ch;margin:0 0 26px}.hero .btns{display:flex;gap:12px;flex-wrap:wrap}
-.board{background:#16203c;border:1px solid #33426e;border-radius:14px;padding:16px}.board h3{margin:0 0 12px;font-size:14px;font-weight:500;color:#c9d2ee;display:flex;justify-content:space-between}
-.pcs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.pcs div{background:#fff;color:var(--ink);border-radius:8px;padding:10px 10px 8px;border-left:5px solid var(--ok);font-size:13px;line-height:1.3}.pcs div b{display:block;font-size:15px}
-.pcs .b{border-color:var(--busy)}.pcs .m{border-color:var(--bad)}.pcs span{color:var(--mut);font-size:12px}
-.sum{display:flex;gap:16px;margin-top:12px;font-size:13px;color:#c9d2ee}.sum i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
-section.s{padding:60px 0}h2{font-size:28px;margin:0 0 8px;letter-spacing:-.3px}.lead{color:var(--mut);margin:0 0 30px;max-width:60ch}
-.feat{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.feat div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px}.feat h3{margin:0 0 6px;font-size:16px}.feat p{margin:0;color:var(--mut);font-size:14px}
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:28px}.cmp>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px}.cmp h3{margin:0 0 10px}
-.cmp ul{margin:0;padding-left:18px;color:var(--mut)}.cmp li{margin-bottom:6px}.cmp .good{border-top:4px solid var(--ok)}.cmp .old{border-top:4px solid var(--bad)}
-.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.roles div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px}.roles div:nth-child(1){border-top:4px solid var(--acc)}.roles div:nth-child(2){border-top:4px solid var(--busy)}.roles div:nth-child(3){border-top:4px solid var(--navy)}.roles small{color:var(--mut);display:block;margin-bottom:8px}.roles h3{margin:0}.roles p{margin:0;font-size:14px}
-.sec{background:#fff;border-block:1px solid var(--line)}.chips{display:flex;flex-wrap:wrap;gap:10px}.chips span{background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-size:14px}
-.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:w}.flow div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;position:relative}.flow div:before{counter-increment:w;content:"Tuần " counter(w);display:block;font-weight:700;color:var(--acc);margin-bottom:4px}.flow p{margin:0;font-size:14px;color:var(--mut)}
-footer{background:var(--navy);color:#c9d2ee;padding:34px 0;font-size:14px}footer b{color:#fff}.team{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:10px}
-@media(max-width:860px){.hero .wrap,.cmp,.roles{grid-template-columns:1fr}.feat,.flow{grid-template-columns:1fr 1fr}}@media(max-width:520px){.feat,.flow{grid-template-columns:1fr}}
-:focus-visible{outline:2px solid #8fb0ff;outline-offset:2px}
-</style></head><body>
-<header class="top"><div class="wrap"><div class="logo">Alt F4<small>Quản lý quán net</small></div><a class="btn ghost" href="<?=$in?'app.php':'login.php'?>"><?=$in?'Vào hệ thống':'Đăng nhập'?></a></div></header>
-<div class="hero"><div class="wrap"><div><h1>Mọi máy, mọi phiên, một màn hình.</h1><p>Website quản lý tập trung cho quán net: nhân viên thao tác trên cùng một hệ thống, chủ quán theo dõi doanh thu, tồn kho và nhân viên mà không cần sổ giấy hay bảng tính rời rạc.</p><div class="btns"><a class="btn light" href="<?=$in?'app.php':'login.php'?>"><?=$in?'Mở bảng điều khiển':'Đăng nhập hệ thống'?></a><a class="btn ghost" href="#chuc-nang">Xem chức năng</a></div></div>
-<div class="board" aria-label="Minh họa trạng thái máy"><h3><span>Sơ đồ phòng máy (minh họa)</span><span>12 máy</span></h3><div class="pcs"><?php foreach($pc as $i=>$s){echo '<div class="'.$s.'"><b>PC'.sprintf('%02d',$i+1).'</b><span>'.$lab[$s].'</span></div>';}?></div><div class="sum"><span><i style="background:var(--ok)"></i>Trống</span><span><i style="background:var(--busy)"></i>Đang dùng</span><span><i style="background:var(--bad)"></i>Bảo trì</span></div></div></div></div>
-
-<section class="s"><div class="wrap"><h2>Vấn đề quán net đang gặp</h2><p class="lead">Quán phải theo dõi máy, giờ chơi, số dư hội viên, đồ ăn thức uống, tồn kho, thanh toán, nhân viên và bảo trì cùng lúc.</p>
-<div class="cmp"><div class="old"><h3>Quản lý thủ công</h3><ul><li>Ghi sổ giấy, bảng tính và nhiều công cụ riêng lẻ, nhập liệu lặp lại</li><li>Mất thời gian tổng hợp doanh thu cuối ca</li><li>Khó đối chiếu tồn kho và tra cứu giao dịch</li><li>Dễ sai sót khi tính tiền và theo dõi số dư</li></ul></div>
-<div class="good"><h3>Với website quản lý tập trung</h3><ul><li>Một hệ thống chung cho thu ngân, quản lý và quản trị viên</li><li>Tính phí và trừ ví tự động, ghi giờ theo máy chủ</li><li>Tồn kho cập nhật theo từng đơn, hóa đơn lưu đầy đủ</li><li>Báo cáo doanh thu có sẵn, xuất CSV hoặc in</li></ul></div></div></div></section>
-
-<section class="s" id="chuc-nang" style="padding-top:0"><div class="wrap"><h2>8 nhóm chức năng chính</h2><p class="lead">Bao phủ toàn bộ nghiệp vụ trong báo cáo đề xuất, gồm các use case bắt buộc và nên có.</p><div class="feat"><?php foreach($feat as $f)echo '<div><h3>'.$f[0].'</h3><p>'.$f[1].'</p></div>';?></div></div></section>
-
-<section class="s sec"><div class="wrap"><h2>Ba vai trò, quyền kế thừa theo cấp</h2><p class="lead">Hội viên và khách vãng lai do nhân viên phục vụ nên không phải tác nhân của hệ thống. Quyền luôn được kiểm tra ở phía máy chủ.</p><div class="roles"><?php foreach($roles as $r)echo '<div><h3>'.$r[0].'</h3><small>'.$r[1].'</small><p>'.$r[2].'</p></div>';?></div></div></section>
-
-<section class="s"><div class="wrap"><h2>Công nghệ và an toàn dữ liệu</h2><p class="lead">Mô hình phân lớp tách giao diện, nghiệp vụ và dữ liệu.</p><div class="chips"><span>HTML / CSS / JS</span><span>PHP 8 (PDO)</span><span>MySQL utf8mb4</span><span>Transaction + khóa dòng</span><span>password_hash</span><span>Chống CSRF</span><span>Nhật ký thao tác</span><span>Sao lưu định kỳ</span><span>Chrome · Edge · Firefox</span></div></div></section>
-
-<section class="s sec"><div class="wrap"><h2>Kế hoạch 4 tuần, 120 giờ</h2><p class="lead">Mỗi thành viên khoảng 30 giờ, tức 8 giờ mỗi tuần.</p><div class="flow"><div><b>Nền tảng</b><p>Khảo sát, chốt phạm vi, thiết kế CSDL, đăng nhập và quản lý máy.</p></div><div><b>Phiên & hội viên</b><p>Mở/kết thúc phiên, tính phí, hội viên, nạp tiền, lịch sử ví.</p></div><div><b>Bán hàng & kho</b><p>Sản phẩm, đơn hàng, hóa đơn, thanh toán, nhập/xuất kho.</p></div><div><b>Bàn giao</b><p>Nhân viên, bảo trì, báo cáo, kiểm thử, demo và nghiệm thu.</p></div></div></div></section>
-
-<footer><div class="wrap"><b>Website quản lý quán net</b> · Môn Quản trị dự án Công nghệ thông tin · Nhóm Alt F4 · Lớp 242101TH001<div class="team"><span>Lê Nhật Duy · 24210501005</span><span>Dương Hoàng Anh Chương · 24210501001</span><span>Trương Thiện Thư · 24210501050</span><span>Lê Chí Toàn · 24210501038</span></div></div></footer>
-</body></html>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#090b12;color:#e8ecf6;font:15px/1.6 system-ui,Segoe UI,sans-serif}
+  main{max-width:640px;padding:32px;border:1px solid #243049;background:#10162a}
+  h1{margin:0 0 6px;font-size:22px;color:#00e5ff} code{background:#0b0e1a;padding:2px 8px;border:1px solid #243049;color:#7cf2ff}
+  ol{padding-left:20px} li{margin:8px 0} .warn{color:#ffb300}
+</style></head><body><main>
+<h1>AltF4 Gaming Center</h1>
+<?php if ($problem === 'absolute'): ?>
+<p class="warn">Thư mục <code>dist/</code> được build sai kiểu (đường dẫn tuyệt đối) nên trang sẽ trắng.</p>
+<?php else: ?>
+<p>Dự án chưa được build nên chưa có giao diện để hiển thị.</p>
+<?php endif; ?>
+<ol>
+  <li>Mở terminal trong thư mục dự án và chạy <code>npm install</code></li>
+  <li>Chạy <code>npm run build:xampp</code></li>
+  <li>Tải lại trang này — web sẽ tự mở bản build.</li>
+</ol>
+<p>Lưu ý: không mở trực tiếp <code>index.html</code> ở thư mục gốc (đó là mã nguồn Vite, sẽ ra trang trắng).</p>
+</main></body></html>

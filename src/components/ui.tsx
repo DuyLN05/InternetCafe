@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { num, vnd } from '../lib/format'
+import { imgSrc } from '../lib/remote'
 import type { Result } from '../lib/store'
 
 /* ============================================================
@@ -89,7 +90,7 @@ export function productEmoji(name: string, cat: string) {
 const ART_TONE: Record<string, string> = { 'Nước giải khát': '0, 229, 255', 'Đồ ăn': '255, 171, 0', 'Thẻ & phụ kiện': '168, 85, 247' }
 export function ProductArt({ name, cat, image, className = '' }: { name: string; cat: string; image?: string; className?: string }) {
   return image
-    ? <div className={`p-art has-img ${className}`}><img src={image} alt={name} loading="lazy" draggable={false} /></div>
+    ? <div className={`p-art has-img ${className}`}><img src={imgSrc(image)} alt={name} loading="lazy" draggable={false} /></div>
     : <div className={`p-art ${className}`} style={{ ['--tone' as string]: ART_TONE[cat] ?? '0, 229, 255' }} role="img" aria-label={name}><span>{productEmoji(name, cat)}</span></div>
 }
 

@@ -4,7 +4,9 @@ import { AccessDenied, Button, Icon, LightningTrail, Loader, Logo, Modal, TextFi
 import { ACCOUNTS } from './lib/data'
 import { dmy, hms, norm } from './lib/format'
 import { NAV, canSee, useRoute, type PageId } from './lib/nav'
-import { StoreProvider, useNow, useStore } from './lib/store'
+import { fetchState } from './lib/remote'
+import { setBackend } from './lib/remote'
+import { StoreProvider, loadLocalState, mergeState, useNow, useStore, type Boot } from './lib/store'
 import { roleRank, type Role, type User } from './lib/types'
 import Hub from './pages/Hub'
 import Machines from './pages/Machines'
@@ -162,12 +164,15 @@ function Clock() {
    Shell: sidebar + topbar + trang (có hiệu ứng chuyển trang)
    ============================================================ */
 function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User; role: Role; setRole: (r: Role) => void; onLogout: () => void; firstEnter: boolean }) {
-  const { state, user } = useStore()
+  const { state, user, saveError, notice } = useStore()
+  const toastBar = useToast()
   const { theme, toggle } = useTheme()
   const [route, go] = useRoute()
   const [view, setView] = useState<PageId>(route)
   const [leaving, setLeaving] = useState(false)
   const [drawer, setDrawer] = useState(false)
+  useEffect(() => { if (saveError) toastBar({ ok: false, msg: 'Không lưu được dữ liệu. Nếu dùng XAMPP: kiểm tra Apache đang chạy và thư mục data có quyền ghi.' }) }, [saveError, toastBar])
+  useEffect(() => { if (notice.n) toastBar({ ok: true, msg: notice.text }) }, [notice, toastBar])
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { const v = localStorage.getItem('altf4-side'); if (v) return v === '1' } catch { /* bỏ qua */ }
     return window.innerWidth < 1180
@@ -327,26 +332,56 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
 /* ============================================================
    Root
    ============================================================ */
+const AUTH_KEY = 'altf4-auth'
+function restoreAuth(): { account: User | null; role: Role } {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY)
+    if (raw) {
+      const { username, role } = JSON.parse(raw) as { username: string; role: Role }
+      const acc = ACCOUNTS.find((a) => a.username === username)
+      if (acc) return { account: acc, role: role in roleRank ? role : acc.role }
+    }
+  } catch { /* bỏ qua */ }
+  return { account: null, role: 'Thu ngân' }
+}
+
 function Root() {
   useGlobalEffects()
-  const [account, setAccount] = useState<User | null>(null)
-  const [role, setRole] = useState<Role>('Thu ngân')
+  const init = useRef(restoreAuth()).current
+  const [account, setAccount] = useState<User | null>(init.account)
+  const [role, setRoleState] = useState<Role>(init.role)
   const [boot, setBoot] = useState(false)
+  const setRole = useCallback((r: Role) => {
+    setRoleState(r)
+    try { const raw = localStorage.getItem(AUTH_KEY); if (raw) localStorage.setItem(AUTH_KEY, JSON.stringify({ ...JSON.parse(raw), role: r })) } catch { /* bỏ qua */ }
+  }, [])
 
   const login = (u: User) => {
-    setAccount(u); setRole(u.role); setBoot(true)
+    setAccount(u); setRoleState(u.role); setBoot(true)
+    try { localStorage.setItem(AUTH_KEY, JSON.stringify({ username: u.username, role: u.role })) } catch { /* bỏ qua */ }
     window.location.hash = '/hub'
     window.setTimeout(() => setBoot(false), 1700)
   }
-  const logout = useCallback(() => { setAccount(null); setBoot(false) }, [])
+  const logout = useCallback(() => { setAccount(null); setBoot(false); try { localStorage.removeItem(AUTH_KEY) } catch { /* bỏ qua */ } }, [])
 
   const [first, setFirst] = useState(true)
+  const [data, setData] = useState<Boot | null>(null)
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const d = await fetchState()
+      if (!alive) return
+      if (d) { setBackend(true); setData({ mode: 'php', state: d.state ? mergeState(d.state) : loadLocalState(), rev: d.rev }) }
+      else { setBackend(false); setData({ mode: 'local', state: loadLocalState(), rev: 0 }) }
+    })()
+    return () => { alive = false }
+  }, [])
   useEffect(() => { const t = window.setTimeout(() => setFirst(false), 1500); return () => window.clearTimeout(t) }, [])
-  if (first && !account) return <Loader caption="ĐANG KHỞI ĐỘNG HỆ THỐNG…" out />
+  if (!data || (first && !account)) return <Loader caption={data ? 'ĐANG KHỞI ĐỘNG HỆ THỐNG…' : 'ĐANG KẾT NỐI DỮ LIỆU…'} out={!!data} />
   if (!account) return <Login onLogin={login} />
   const user: User = { ...account, role }
   return (
-    <StoreProvider user={user}>
+    <StoreProvider user={user} boot={data}>
       <Shell account={account} role={role} setRole={setRole} onLogout={logout} firstEnter={boot} />
       {boot && <Loader out />}
     </StoreProvider>

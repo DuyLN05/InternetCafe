@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => {
   const emitSourcemaps = mode === 'development'
 
   return {
-    base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
+    // `vite build --mode xampp` → đường dẫn tương đối để chạy trong htdocs/<thư-mục>/dist
+    base: mode === 'xampp' ? './' : process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
@@ -34,6 +35,11 @@ react(),
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
+      // npm run dev: chuyển /api và /data sang Apache của XAMPP (đặt XAMPP_DIR nếu thư mục trong htdocs không tên "altf4")
+      proxy: {
+        '/api': { target: 'http://localhost', changeOrigin: true, rewrite: (p: string) => `/${process.env.XAMPP_DIR || 'altf4'}${p}` },
+        '/data': { target: 'http://localhost', changeOrigin: true, rewrite: (p: string) => `/${process.env.XAMPP_DIR || 'altf4'}${p}` },
+      },
       watch: {
         ignored: [
           '**/.figma/**',

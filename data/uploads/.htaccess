@@ -1,0 +1,4 @@
+# Thư mục ảnh tải lên: tuyệt đối không cho chạy PHP
+<FilesMatch "\.(php|phtml|php[0-9]|phar)$">
+  Require all denied
+</FilesMatch>

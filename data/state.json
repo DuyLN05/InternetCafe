@@ -1,4 +1,4 @@
-{"rev":8,"savedAt":"2026-11-01T07:11:44+01:00","state":{
+{"rev":12,"savedAt":"2026-11-01T12:34:04+01:00","state":{
  "machines": [
   {
    "id": "PC-01",
@@ -558,6 +558,42 @@
  ],
  "logs": [
   {
+   "id": 111,
+   "time": 1793532843943,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-001",
+   "detail": "Liên Minh Huyền Thoại"
+  },
+  {
+   "id": 110,
+   "time": 1793532598343,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa banner",
+   "target": "BN-001",
+   "detail": "Valorant · Mùa giải mới"
+  },
+  {
+   "id": 109,
+   "time": 1793532511945,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa banner",
+   "target": "BN-001",
+   "detail": "Valorant · Mùa giải mới"
+  },
+  {
+   "id": 108,
+   "time": 1793531667217,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa banner",
+   "target": "BN-001",
+   "detail": "Valorant · Mùa giải mới"
+  },
+  {
    "id": 107,
    "time": 1793513504056,
    "user": "Lê Nhật Duy",
@@ -832,7 +868,7 @@
    "subtitle": "Màn hình 240Hz tại khu VIP — đặt máy cho cả đội ngay hôm nay.",
    "cta": "Xem game",
    "tone": "magenta",
-   "image": "uploads/ab3dbf0c7383ec7d0f06.jpg",
+   "image": "uploads/518d74ec3647b9301392.webp",
    "gameId": "GM-002",
    "id": "BN-001"
   },
@@ -861,6 +897,7 @@
    "desc": "Đấu trường 5v5 chiến thuật, phòng đội hình sẵn cho nhóm bạn.",
    "zone": "Tất cả máy",
    "tone": "cyan",
+   "image": "uploads/d1450c16b9eee941bcb3.webp",
    "id": "GM-001"
   },
   {
@@ -915,5 +952,5 @@
   "rateStd": 10000
  },
  "dayStart": 1793496441006,
- "seq": 107
+ "seq": 111
 }}

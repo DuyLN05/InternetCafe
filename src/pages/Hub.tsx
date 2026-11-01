@@ -125,7 +125,7 @@ function GameModal({ id, onClose }: { id?: string; onClose: () => void }) {
   return (
     <Modal size="lg" eyebrow="Thư viện game" title={cur ? `Sửa game · ${cur.id}` : 'Thêm game'} onClose={onClose}
       footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Thêm game'}</Button></>}>
-      <ImagePicker max={1000} quality={0.9} title="Ảnh game" name={name || 'Game mới'} cat="Game" value={image} onChange={setImage} />
+      <ImagePicker max={1600} quality={0.94} title="Ảnh game" name={name || 'Game mới'} cat="Game" value={image} onChange={setImage} />
       <div className="form-grid" style={{ marginTop: 18 }}>
         <div style={{ gridColumn: '1 / -1' }}><TextField label="Tên game" value={name} onChange={setName} autoFocus={!cur} placeholder="VD: Dota 2" /></div>
         <TextField label="Thể loại" value={genre} onChange={setGenre} placeholder="VD: MOBA, FPS…" />

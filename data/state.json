@@ -1,4 +1,4 @@
-{"rev":12,"savedAt":"2026-11-01T12:34:04+01:00","state":{
+{"rev":45,"savedAt":"2026-11-06T04:12:25+01:00","state":{
  "machines": [
   {
    "id": "PC-01",
@@ -220,27 +220,30 @@
    "stock": 48,
    "min": 12,
    "sold": 18,
-   "active": true
+   "active": true,
+   "image": "uploads/1f471103234cc2501d64.webp"
   },
   {
    "id": "SP-002",
    "name": "Mì trứng xúc xích",
    "cat": "Đồ ăn",
-   "price": 21000,
+   "price": 25000,
    "stock": 12,
-   "min": 8,
+   "min": 10,
    "sold": 11,
-   "active": true
+   "active": true,
+   "image": "uploads/d71b39ce3f94d582b0d4.webp"
   },
   {
    "id": "SP-003",
    "name": "Cà phê lon",
    "cat": "Nước giải khát",
-   "price": 17000,
+   "price": 10000,
    "stock": 4,
    "min": 10,
    "sold": 9,
-   "active": true
+   "active": true,
+   "image": "uploads/da44d7e1268411cc79d3.webp"
   },
   {
    "id": "SP-004",
@@ -250,7 +253,8 @@
    "stock": 36,
    "min": 12,
    "sold": 14,
-   "active": true
+   "active": true,
+   "image": "uploads/dcba187ce44b0253394f.webp"
   },
   {
    "id": "SP-005",
@@ -260,7 +264,8 @@
    "stock": 20,
    "min": 6,
    "sold": 7,
-   "active": true
+   "active": true,
+   "image": "uploads/c55ae1460219e62003f7.webp"
   },
   {
    "id": "SP-006",
@@ -270,7 +275,8 @@
    "stock": 15,
    "min": 5,
    "sold": 5,
-   "active": true
+   "active": true,
+   "image": "uploads/6b95d75d15c47001da44.webp"
   },
   {
    "id": "SP-007",
@@ -280,17 +286,19 @@
    "stock": 18,
    "min": 6,
    "sold": 8,
-   "active": true
+   "active": true,
+   "image": "uploads/6140f05b46acc6d1e23d.webp"
   },
   {
    "id": "SP-008",
-   "name": "Mì ly bò",
+   "name": "snack",
    "cat": "Đồ ăn",
-   "price": 18000,
+   "price": 10000,
    "stock": 2,
    "min": 8,
    "sold": 6,
-   "active": true
+   "active": true,
+   "image": "uploads/1205bad85c6f96bce406.webp"
   },
   {
    "id": "SP-009",
@@ -300,7 +308,8 @@
    "stock": 60,
    "min": 20,
    "sold": 12,
-   "active": true
+   "active": true,
+   "image": "uploads/d05e6a72de9891148344.webp"
   },
   {
    "id": "SP-010",
@@ -310,7 +319,8 @@
    "stock": 14,
    "min": 5,
    "sold": 4,
-   "active": true
+   "active": true,
+   "image": "uploads/1e3d5eb6019021aec582.webp"
   },
   {
    "id": "SP-011",
@@ -320,7 +330,8 @@
    "stock": 10,
    "min": 3,
    "sold": 2,
-   "active": true
+   "active": true,
+   "image": "uploads/071f2f9949c43ae19b87.webp"
   },
   {
    "id": "SP-012",
@@ -330,7 +341,30 @@
    "stock": 25,
    "min": 5,
    "sold": 3,
-   "active": true
+   "active": true,
+   "image": "uploads/f106ac9119d62f96e620.webp"
+  },
+  {
+   "id": "SP-013",
+   "name": "Cá Viên Chiên",
+   "cat": "Đồ ăn",
+   "price": 30000,
+   "stock": 3,
+   "min": 5,
+   "sold": 0,
+   "active": true,
+   "image": "uploads/235bd9b78304fda4a6b0.webp"
+  },
+  {
+   "id": "SP-014",
+   "name": "Thẻ Garena",
+   "cat": "Thẻ & phụ kiện",
+   "price": 20000,
+   "stock": 6,
+   "min": 5,
+   "sold": 0,
+   "active": true,
+   "image": "uploads/5ba9be908fa74dea7de2.webp"
   }
  ],
  "orders": [
@@ -557,6 +591,303 @@
   }
  ],
  "logs": [
+  {
+   "id": 144,
+   "time": 1793934745112,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm game",
+   "target": "GM-010",
+   "detail": "minecraft"
+  },
+  {
+   "id": 143,
+   "time": 1793934649361,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm game",
+   "target": "GM-009",
+   "detail": "delta force"
+  },
+  {
+   "id": 142,
+   "time": 1793934564010,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-008",
+   "detail": "The ISLE"
+  },
+  {
+   "id": 141,
+   "time": 1793934525538,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm game",
+   "target": "GM-008",
+   "detail": "The ISLE"
+  },
+  {
+   "id": 140,
+   "time": 1793934413495,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm game",
+   "target": "GM-007",
+   "detail": "Tập Kích"
+  },
+  {
+   "id": 139,
+   "time": 1793934034900,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Xóa banner",
+   "target": "BN-003",
+   "detail": "Nạp 200K tặng 20K"
+  },
+  {
+   "id": 138,
+   "time": 1793934022831,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa banner",
+   "target": "BN-002",
+   "detail": "Ưu Đãi"
+  },
+  {
+   "id": 137,
+   "time": 1793933816514,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm banner",
+   "target": "BN-005",
+   "detail": "THE GAMER"
+  },
+  {
+   "id": 136,
+   "time": 1793933597948,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm banner",
+   "target": "BN-004",
+   "detail": "Bình Nguyên Vô Tận"
+  },
+  {
+   "id": 135,
+   "time": 1793933226062,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-014",
+   "detail": "Thẻ Garena"
+  },
+  {
+   "id": 134,
+   "time": 1793933216493,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-012",
+   "detail": "Thẻ cào Garena 50K"
+  },
+  {
+   "id": 133,
+   "time": 1793933038153,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-012",
+   "detail": "Thẻ cào Garena 50K"
+  },
+  {
+   "id": 132,
+   "time": 1793933027971,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm sản phẩm",
+   "target": "SP-014",
+   "detail": "Thẻ Garena"
+  },
+  {
+   "id": 131,
+   "time": 1793932937987,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-011",
+   "detail": "Tai nghe gaming (cho thuê)"
+  },
+  {
+   "id": 130,
+   "time": 1793932886666,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-012",
+   "detail": "Thẻ cào Garena 50K"
+  },
+  {
+   "id": 129,
+   "time": 1793932824118,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Thêm sản phẩm",
+   "target": "SP-013",
+   "detail": "Cá Viên Chiên"
+  },
+  {
+   "id": 128,
+   "time": 1793932725954,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Cập nhật ảnh",
+   "target": "SP-010",
+   "detail": "Khoai tây chiên"
+  },
+  {
+   "id": 127,
+   "time": 1793932645407,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-008",
+   "detail": "snack"
+  },
+  {
+   "id": 126,
+   "time": 1793932630555,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-009",
+   "detail": "Nước suối Aquafina"
+  },
+  {
+   "id": 125,
+   "time": 1793932542627,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-008",
+   "detail": "snack"
+  },
+  {
+   "id": 124,
+   "time": 1793932421192,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-008",
+   "detail": "snack"
+  },
+  {
+   "id": 123,
+   "time": 1793932328385,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-007",
+   "detail": "Bánh mì thịt"
+  },
+  {
+   "id": 122,
+   "time": 1793932057538,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-006",
+   "detail": "Cơm chiên trứng"
+  },
+  {
+   "id": 121,
+   "time": 1793931981601,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Cập nhật ảnh",
+   "target": "SP-005",
+   "detail": "Trà đào cam sả"
+  },
+  {
+   "id": 120,
+   "time": 1793931924740,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-004",
+   "detail": "Coca-Cola"
+  },
+  {
+   "id": 119,
+   "time": 1793931861639,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-003",
+   "detail": "Cà phê lon"
+  },
+  {
+   "id": 118,
+   "time": 1793931801344,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-002",
+   "detail": "Mì trứng xúc xích"
+  },
+  {
+   "id": 117,
+   "time": 1793931006837,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa sản phẩm",
+   "target": "SP-001",
+   "detail": "Sting dâu"
+  },
+  {
+   "id": 116,
+   "time": 1793930854785,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-003",
+   "detail": "Nghịch Thủy Hàn"
+  },
+  {
+   "id": 115,
+   "time": 1793930671038,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-006",
+   "detail": "GTA V"
+  },
+  {
+   "id": 114,
+   "time": 1793930611014,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-005",
+   "detail": "FC Online"
+  },
+  {
+   "id": 113,
+   "time": 1793930533834,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-004",
+   "detail": "PUBG"
+  },
+  {
+   "id": 112,
+   "time": 1793930478380,
+   "user": "Lê Nhật Duy",
+   "role": "Quản trị viên",
+   "action": "Sửa game",
+   "target": "GM-002",
+   "detail": "Liên Quân"
+  },
   {
    "id": 111,
    "time": 1793532843943,
@@ -873,21 +1204,32 @@
    "id": "BN-001"
   },
   {
-   "id": "BN-002",
    "tag": "SỰ KIỆN",
-   "title": "Giải đấu cuối tuần AltF4 Cup",
-   "subtitle": "Counter-Strike 2 · 5v5 · Tổng giải thưởng 5.000.000 ₫.",
+   "title": "Ưu Đãi",
+   "subtitle": "NHẬN QUÀ CỰC KHỦNG!",
    "cta": "Tìm hiểu",
    "tone": "amber",
-   "gameId": "GM-003"
+   "image": "uploads/d673f94e179abd87abed.webp",
+   "id": "BN-002"
   },
   {
-   "id": "BN-003",
-   "tag": "KHUYẾN MÃI",
-   "title": "Nạp 200K tặng 20K",
-   "subtitle": "Áp dụng cho hội viên nạp ví trong tuần này, đồ uống giảm 10%.",
-   "cta": "Chơi ngay",
-   "tone": "cyan"
+   "tag": "GAME MỚI",
+   "title": "Bình Nguyên Vô Tận",
+   "subtitle": "đại chiến",
+   "cta": "Xem ngay",
+   "tone": "violet",
+   "image": "uploads/7122071862e48811e460.webp",
+   "gameId": "GM-002",
+   "id": "BN-004"
+  },
+  {
+   "tag": "GAME MỚI",
+   "title": "THE GAMER",
+   "subtitle": "Đam Mê Bất Tân",
+   "cta": "Xem ngay",
+   "tone": "violet",
+   "image": "uploads/0bc2e31b12b3cab044b5.webp",
+   "id": "BN-005"
   }
  ],
  "games": [
@@ -901,44 +1243,85 @@
    "id": "GM-001"
   },
   {
-   "id": "GM-002",
-   "name": "Valorant",
+   "name": "Liên Quân",
    "genre": "FPS chiến thuật",
    "desc": "Bắn súng 5v5 đòi hỏi phản xạ nhanh, màn hình 240Hz ở khu VIP.",
    "zone": "Khu VIP",
-   "tone": "magenta"
+   "tone": "magenta",
+   "image": "uploads/1f0c467457367345d331.webp",
+   "id": "GM-002"
   },
   {
-   "id": "GM-003",
-   "name": "Counter-Strike 2",
-   "genre": "FPS",
+   "name": "Nghịch Thủy Hàn",
+   "genre": "Kiếm Hiệp",
    "desc": "Huyền thoại bắn súng đồng đội, chuột và bàn phím gaming riêng.",
    "zone": "Tất cả máy",
-   "tone": "amber"
+   "tone": "amber",
+   "image": "uploads/fc43e06dbdbc2cc26911.webp",
+   "id": "GM-003"
   },
   {
-   "id": "GM-004",
    "name": "PUBG",
    "genre": "Battle Royale",
    "desc": "Sinh tồn 100 người, cấu hình cao chạy mượt ở thiết lập đồ họa cao.",
    "zone": "Khu VIP",
-   "tone": "green"
+   "tone": "green",
+   "image": "uploads/0096e171faf4f10a3f2c.webp",
+   "id": "GM-004"
   },
   {
-   "id": "GM-005",
    "name": "FC Online",
    "genre": "Thể thao",
    "desc": "Bóng đá đối kháng, tay cầm cho thuê tại quầy.",
    "zone": "Khu thường",
-   "tone": "violet"
+   "tone": "violet",
+   "image": "uploads/649f91d1cd91c29d5016.webp",
+   "id": "GM-005"
   },
   {
-   "id": "GM-006",
    "name": "GTA V",
    "genre": "Thế giới mở",
    "desc": "Khám phá thành phố mở, yêu cầu card đồ họa mạnh.",
    "zone": "Khu VIP",
-   "tone": "violet"
+   "tone": "violet",
+   "image": "uploads/ee0b67cdd09f917ad8b1.webp",
+   "id": "GM-006"
+  },
+  {
+   "name": "Tập Kích",
+   "genre": "Đối kháng",
+   "desc": "",
+   "zone": "Tất cả máy",
+   "tone": "green",
+   "image": "uploads/ba856c1ddad870175b65.webp",
+   "id": "GM-007"
+  },
+  {
+   "name": "The ISLE",
+   "genre": "Sinh Tồn",
+   "desc": "",
+   "zone": "Khu VIP",
+   "tone": "amber",
+   "image": "uploads/d7390420e792efcff006.webp",
+   "id": "GM-008"
+  },
+  {
+   "name": "delta force",
+   "genre": "Bắn Súng",
+   "desc": "",
+   "zone": "Tất cả máy",
+   "tone": "magenta",
+   "image": "uploads/186262f2739ac8715476.webp",
+   "id": "GM-009"
+  },
+  {
+   "name": "minecraft",
+   "genre": "Phiêu Lưu",
+   "desc": "",
+   "zone": "Tất cả máy",
+   "tone": "cyan",
+   "image": "uploads/107a02ce1a53a7820c5a.webp",
+   "id": "GM-010"
   }
  ],
  "settings": {
@@ -952,5 +1335,5 @@
   "rateStd": 10000
  },
  "dayStart": 1793496441006,
- "seq": 111
+ "seq": 144
 }}

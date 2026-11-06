@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, DataTable, Icon, PageHead, SelectField, Stat, TextField, useToast, type Col } from '../components/ui'
 import { downloadCsv, num, stamp, vnd } from '../lib/format'
 import type { PageId } from '../lib/nav'
-import { shiftTotals, useStore, weekStats } from '../lib/store'
+import { shiftTotals, useNow, useStore, weekStats } from '../lib/store'
 import type { DayStat } from '../lib/types'
 
 const mil = (v: number) => (v === 0 ? '0' : `${(v / 1e6).toFixed(1).replace('.0', '')}tr`)
@@ -37,6 +37,7 @@ export function RevenueChart({ data }: { data: DayStat[] }) {
    ============================================================ */
 export function Dashboard({ go }: { go: (p: PageId) => void }) {
   const { state, user } = useStore()
+  const now = useNow()
   const week = weekStats(state)
   const machine = week.reduce((a, d) => a + d.machine, 0)
   const fnb = week.reduce((a, d) => a + d.fnb, 0)
@@ -49,11 +50,17 @@ export function Dashboard({ go }: { go: (p: PageId) => void }) {
   const lowMem = state.members.filter((m) => !m.locked && m.balance < state.settings.lowBalance)
   const openTk = state.tickets.filter((t) => t.status === 'open')
   const fresh = state.orders.filter((o) => o.status === 'Mới')
+  const waitingOrders = fresh.filter((o) => now - o.time > 20 * 60_000)
+  const lowSessionBalances = state.sessions.filter((s) => s.status === 'open' && s.memberId && (state.members.find((m) => m.id === s.memberId)?.balance ?? Infinity) < state.settings.lowBalance)
+  const longSessions = state.sessions.filter((s) => s.status === 'open' && now - s.start > 4 * 60 * 60_000)
   const alerts = [
     low.length && { tone: 'amber', icon: 'box', t: `${low.length} sản phẩm sắp hết`, d: `${low[0]?.name} chỉ còn ${low[0]?.stock}`, to: 'inventory' as PageId },
     lowMem.length && { tone: 'magenta', icon: 'users', t: `${lowMem.length} số dư hội viên thấp`, d: `Dưới ngưỡng ${vnd(state.settings.lowBalance)}`, to: 'members' as PageId },
     openTk.length && { tone: 'cyan', icon: 'wrench', t: `${openTk.length} phiếu bảo trì đang mở`, d: `${openTk[0].machineId} · ${openTk[0].issue}`, to: 'maintenance' as PageId },
     fresh.length && { tone: 'magenta', icon: 'cart', t: `${fresh.length} đơn chờ phục vụ`, d: `${fresh[0].machineId ?? 'Quầy'} · ${vnd(fresh[0].total)}`, to: 'orders' as PageId },
+    waitingOrders.length && { tone: 'amber', icon: 'clock', t: `${waitingOrders.length} đơn chờ trên 20 phút`, d: `${waitingOrders[0].machineId ?? 'Quầy'} · ${Math.floor((now - waitingOrders[0].time) / 60000)} phút`, to: 'orders' as PageId },
+    lowSessionBalances.length && { tone: 'amber', icon: 'wallet', t: `${lowSessionBalances.length} phiên có số dư thấp`, d: `${lowSessionBalances[0].customer} · ${vnd(state.members.find((m) => m.id === lowSessionBalances[0].memberId)?.balance ?? 0)} còn lại`, to: 'members' as PageId },
+    longSessions.length && { tone: 'cyan', icon: 'clock', t: `${longSessions.length} phiên kéo dài trên 4 giờ`, d: `${longSessions[0].machineId} · ${longSessions[0].customer}`, to: 'sessions' as PageId },
   ].filter(Boolean) as { tone: string; icon: string; t: string; d: string; to: PageId }[]
   const top = [...state.products].sort((a, b) => b.sold * b.price - a.sold * a.price).slice(0, 5)
   const topMax = top[0] ? top[0].sold * top[0].price : 1
@@ -117,16 +124,31 @@ export function Dashboard({ go }: { go: (p: PageId) => void }) {
 export function Reports() {
   const { state } = useStore()
   const toast = useToast()
-  const week = weekStats(state)
-  const [type, setType] = useState<'revenue' | 'invoices' | 'stock'>('revenue')
-  const [from, setFrom] = useState('12/05/2025')
-  const [to, setTo] = useState('18/05/2025')
-  const dayRows = week.map((d) => ({ ...d, total: d.machine + d.fnb }))
+  const dateInput = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const today = new Date()
+  const start = new Date(today); start.setDate(start.getDate() - 6)
+  const [type, setType] = useState<'revenue' | 'invoices' | 'stock' | 'sessions' | 'members'>('revenue')
+  const [from, setFrom] = useState(dateInput(start))
+  const [to, setTo] = useState(dateInput(today))
+  const [staff, setStaff] = useState('all')
+  const fromTime = new Date(`${from}T00:00:00`).getTime()
+  const toTime = new Date(`${to}T23:59:59.999`).getTime()
+  const inPeriod = (time: number) => Number.isFinite(fromTime) && Number.isFinite(toTime) && time >= fromTime && time <= toTime
+  const staffName = staff === 'all' ? '' : state.staff.find((s) => s.id === staff)?.name ?? ''
+  const invoices = state.invoices.filter((i) => inPeriod(i.time) && (i.status === 'paid') && (!staffName || i.by === staffName))
+  const dayGroups = new Map<string, { machine: number; fnb: number }>()
+  invoices.forEach((i) => { const label = dateInput(new Date(i.time)); const v = dayGroups.get(label) ?? { machine: 0, fnb: 0 }; v.machine += i.machineFee; v.fnb += i.fnb; dayGroups.set(label, v) })
+  const dayRows = [...dayGroups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([d, v]) => ({ d: d.slice(5), ...v, total: v.machine + v.fnb }))
+  const chartData: DayStat[] = dayRows.map(({ d, machine, fnb }) => ({ d, machine, fnb }))
+  const sessions = state.sessions.filter((s) => inPeriod(s.start) && (!staffName || s.openedBy === staffName))
+  const memberRank = (m: typeof state.members[number]) => (m.points ?? 0) >= 1000 ? 'Kim cương' : (m.points ?? 0) >= 500 ? 'Vàng' : (m.points ?? 0) >= 100 ? 'Bạc' : 'Thành viên'
 
   const exportCsv = () => {
     if (type === 'revenue') downloadCsv('bao-cao-doanh-thu.csv', [['Ngày', 'Doanh thu máy', 'F&B', 'Tổng'], ...dayRows.map((d) => [d.d, d.machine, d.fnb, d.total])])
-    else if (type === 'invoices') downloadCsv('bao-cao-hoa-don.csv', [['Số hóa đơn', 'Khách', 'Phí máy', 'Sản phẩm', 'Tổng', 'Thanh toán', 'Trạng thái', 'Thời điểm'], ...state.invoices.map((i) => [i.id, i.customer, i.machineFee, i.fnb, i.total, i.method, i.status, stamp(i.time)])])
-    else downloadCsv('bao-cao-ton-kho.csv', [['Mã', 'Sản phẩm', 'Tồn', 'Tối thiểu', 'Đã bán'], ...state.products.map((p) => [p.id, p.name, p.stock, p.min, p.sold])])
+    else if (type === 'invoices') downloadCsv('bao-cao-hoa-don.csv', [['Số hóa đơn', 'Khách', 'Phí máy', 'Sản phẩm', 'Tổng', 'Thanh toán', 'Trạng thái', 'Thời điểm'], ...state.invoices.filter((i) => inPeriod(i.time) && (!staffName || i.by === staffName)).map((i) => [i.id, i.customer, i.machineFee, i.fnb, i.total, i.method, i.status, stamp(i.time)])])
+    else if (type === 'stock') downloadCsv('bao-cao-ton-kho.csv', [['Mã', 'Sản phẩm', 'Tồn', 'Tối thiểu', 'Đã bán'], ...state.products.map((p) => [p.id, p.name, p.stock, p.min, p.sold])])
+    else if (type === 'sessions') downloadCsv('bao-cao-phien.csv', [['Mã phiên', 'Khách', 'Máy', 'Nhân viên', 'Bắt đầu', 'Kết thúc', 'Phút'], ...sessions.map((s) => [s.id, s.customer, s.machineId, s.openedBy, stamp(s.start), s.end ? stamp(s.end) : '', Math.round(((s.end ?? Date.now()) - s.start) / 60000)])])
+    else downloadCsv('bao-cao-hoi-vien.csv', [['Mã hội viên', 'Tên', 'Điện thoại', 'Hạng', 'Điểm', 'Số dư', 'Lần cuối sử dụng'], ...state.members.map((m) => [m.id, m.name, m.phone, memberRank(m), m.points ?? 0, m.balance, stamp(m.last)])])
     toast.show('success', 'Đã xuất CSV', 'Tệp đã được tải xuống máy của bạn.')
   }
 
@@ -141,16 +163,16 @@ export function Reports() {
       <PageHead eyebrow="Phân tích" title="Báo cáo" actions={<div className="button-row"><Button tone="secondary" icon="printer" onClick={() => window.print()}>In báo cáo</Button><Button icon="download" onClick={exportCsv}>Xuất CSV</Button></div>} />
       <div className="card">
         <div className="report-filters">
-          <TextField label="Từ ngày" icon="clock" value={from} onChange={setFrom} />
-          <TextField label="Đến ngày" icon="clock" value={to} onChange={setTo} />
-          <SelectField label="Nhân viên" value="all" onChange={() => {}} options={[{ value: 'all', label: 'Tất cả nhân viên' }, ...state.staff.filter((s) => s.active).map((s) => ({ value: s.id, label: s.name }))]} />
-          <SelectField label="Loại báo cáo" value={type} onChange={(v) => setType(v as typeof type)} options={[{ value: 'revenue', label: 'Tổng hợp doanh thu' }, { value: 'invoices', label: 'Danh sách hóa đơn' }, { value: 'stock', label: 'Tồn kho' }]} />
-          <Button onClick={() => toast.show('info', 'Đã cập nhật báo cáo', `${from} — ${to}`)}>Xem báo cáo</Button>
+          <TextField label="Từ ngày" type="date" value={from} onChange={setFrom} />
+          <TextField label="Đến ngày" type="date" value={to} onChange={setTo} />
+          <SelectField label="Nhân viên" value={staff} onChange={setStaff} options={[{ value: 'all', label: 'Tất cả nhân viên' }, ...state.staff.filter((s) => s.active).map((s) => ({ value: s.id, label: s.name }))]} />
+          <SelectField label="Loại báo cáo" value={type} onChange={(v) => setType(v as typeof type)} options={[{ value: 'revenue', label: 'Tổng hợp doanh thu' }, { value: 'invoices', label: 'Danh sách hóa đơn' }, { value: 'stock', label: 'Tồn kho' }, { value: 'sessions', label: 'Phiên & công suất' }, { value: 'members', label: 'Hội viên & hạng' }]} />
+          <Button onClick={() => toast.show('success', 'Đã cập nhật báo cáo', `${from} — ${to}`)}>Áp dụng</Button>
         </div>
       </div>
       {type === 'revenue' && (
         <>
-          <div className="card spot"><div className="card-head"><div><span className="eyebrow">Doanh thu 7 ngày</span><strong className="num">{vnd(dayRows.reduce((a, d) => a + d.total, 0))}</strong></div></div><RevenueChart data={week} /></div>
+          <div className="card spot"><div className="card-head"><div><span className="eyebrow">Doanh thu theo ngày trong kỳ</span><strong className="num">{vnd(dayRows.reduce((a, d) => a + d.total, 0))}</strong></div></div>{chartData.length ? <RevenueChart data={chartData} /> : <div className="empty-state" style={{ minHeight: 150 }}><strong>Không có doanh thu trong khoảng ngày này</strong></div>}</div>
           <div className="card card-flush"><DataTable cols={dayCols} rows={dayRows} rowKey={(d) => d.d} /></div>
         </>
       )}
@@ -169,6 +191,12 @@ export function Reports() {
         { head: 'Tối thiểu', cell: (p) => <span className="num">{p.min}</span>, right: true },
         { head: 'Đã bán', cell: (p) => <span className="num">{p.sold}</span>, right: true },
       ]} rows={state.products} rowKey={(p) => p.id} /></div>}
+      {type === 'sessions' && <div className="card card-flush"><DataTable cols={[
+        { head: 'Mã phiên', cell: (s) => s.id, className: 'code' }, { head: 'Khách / Máy', cell: (s) => `${s.customer} · ${s.machineId}`, className: 'strong' }, { head: 'Nhân viên', cell: (s) => s.openedBy }, { head: 'Bắt đầu', cell: (s) => stamp(s.start) }, { head: 'Thời lượng', cell: (s) => <span className="num">{Math.round(((s.end ?? Date.now()) - s.start) / 60000)} phút</span>, right: true }, { head: 'Trạng thái', cell: (s) => s.status === 'open' ? 'Đang mở' : 'Đã kết thúc' },
+      ]} rows={sessions} rowKey={(s) => s.id} />{sessions.length === 0 && <div className="empty-state"><strong>Không có phiên trong kỳ</strong></div>}</div>}
+      {type === 'members' && <div className="card card-flush"><DataTable cols={[
+        { head: 'Mã hội viên', cell: (m) => m.id, className: 'code' }, { head: 'Hội viên', cell: (m) => m.name, className: 'strong' }, { head: 'Hạng', cell: memberRank }, { head: 'Điểm', cell: (m) => <span className="num">{m.points ?? 0}</span>, right: true }, { head: 'Số dư', cell: (m) => <span className="num">{vnd(m.balance)}</span>, right: true }, { head: 'Lần cuối', cell: (m) => stamp(m.last) },
+      ]} rows={state.members} rowKey={(m) => m.id} /></div>}
     </>
   )
 }

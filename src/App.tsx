@@ -17,6 +17,7 @@ import Maintenance from './pages/Maintenance'
 import StaffPage from './pages/Staff'
 import { Dashboard, Reports } from './pages/Insights'
 import { Audit, BackupPage, Settings } from './pages/System'
+import ChatWidget from './components/ChatWidget'
 
 /* ============================================================
    Đăng nhập
@@ -324,6 +325,7 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
 
       {palette && <Palette onClose={() => setPalette(false)} go={go} onLogout={onLogout} />}
       {pw && <PasswordModal onClose={() => setPw(false)} />}
+      {role === 'Quản trị viên' && <ChatWidget />}
       <span hidden>{user.role}</span>
     </div>
   )

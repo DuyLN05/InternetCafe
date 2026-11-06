@@ -94,6 +94,7 @@ export function Members() {
   const [q, setQ] = useState('')
   const [top, setTop] = useState<string | null>(null)
   const [add, setAdd] = useState(false)
+  const [profile, setProfile] = useState<string | null>(null)
   const low = state.members.filter((m) => !m.locked && m.balance < state.settings.lowBalance)
   const rows = state.members.filter((m) => {
     const t = tab === 'all' || (tab === 'locked' ? m.locked : tab === 'low' ? !m.locked && m.balance < state.settings.lowBalance : !m.locked)
@@ -108,6 +109,7 @@ export function Members() {
     { head: 'Trạng thái', cell: (m) => m.locked ? <Badge tone="muted">Đã khóa</Badge> : m.balance < state.settings.lowBalance ? <Badge tone="amber">Số dư thấp</Badge> : <Badge tone="empty">Hoạt động</Badge> },
     { head: '', cell: (m) => (
       <div className="row-actions">
+        <Button size="sm" tone="ghost" onClick={() => setProfile(m.id)}>Hồ sơ</Button>
         <Button size="sm" tone="secondary" icon="plus" disabled={m.locked} onClick={() => setTop(m.id)}>Nạp ví</Button>
         <Button size="sm" tone="ghost" disabled={roleRank[user.role] < 1} title={roleRank[user.role] < 1 ? 'Cần quyền Quản lý' : undefined} onClick={() => toast(act.toggleMemberLock(m.id))}>{m.locked ? 'Mở khóa' : 'Khóa'}</Button>
       </div>) },
@@ -128,8 +130,30 @@ export function Members() {
       <div className="note-line"><Icon name="shield" size={15} /> Số dư ví không bao giờ âm. Mọi lần nạp / trừ đều được ghi vào lịch sử giao dịch và nhật ký.</div>
       {top && <TopUpModal memberId={top} onClose={() => setTop(null)} />}
       {add && <AddMemberModal onClose={() => setAdd(false)} />}
+      {profile && <MemberProfile memberId={profile} onClose={() => setProfile(null)} />}
     </>
   )
+}
+
+function MemberProfile({ memberId, onClose }: { memberId: string; onClose: () => void }) {
+  const { state, act } = useStore()
+  const toast = useToast()
+  const member = state.members.find((m) => m.id === memberId)
+  if (!member) return null
+  const points = member.points ?? 0
+  const tier = points >= 1000 ? 'Kim cương' : points >= 500 ? 'Vàng' : points >= 100 ? 'Bạc' : 'Thành viên'
+  const activity = [
+    ...state.sessions.filter((s) => s.memberId === memberId).map((s) => ({ time: s.end ?? s.start, title: `Phiên ${s.id}`, detail: `${s.machineId} · ${clock((s.end ?? s.start) - s.start)}${s.fee ? ` · ${vnd(s.fee)}` : ''}` })),
+    ...state.invoices.filter((i) => i.memberId === memberId).map((i) => ({ time: i.time, title: `Hóa đơn ${i.id}`, detail: `${vnd(i.total)} · ${i.status === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}` })),
+    ...state.orders.filter((o) => o.customer === member.name).map((o) => ({ time: o.time, title: `Đơn ${o.id}`, detail: `${o.lines.map((l) => `${l.qty} × ${l.name}`).join(', ')} · ${vnd(o.total)}` })),
+    ...state.walletTx.filter((t) => t.memberId === memberId).map((t) => ({ time: t.time, title: `Nạp ví ${t.id}`, detail: `+${vnd(t.amount)} · ${METHOD[t.method]}` })),
+  ].sort((a, b) => b.time - a.time)
+  return <Modal size="lg" eyebrow={`Hội viên ${member.id}`} title={member.name} onClose={onClose} footer={(close) => <Button onClick={close}>Đóng hồ sơ</Button>}>
+    <div className="detail-grid member-summary"><div><span>Hạng hiện tại</span><strong>{tier}</strong><small>{points} điểm tích lũy</small></div><div><span>Số dư ví</span><strong>{vnd(member.balance)}</strong><small>{member.phone}</small></div><div><span>Đổi thưởng</span><strong>10.000 ₫</strong><small>cho mỗi 100 điểm</small></div></div>
+    <div className="member-reward"><div><strong>Ưu đãi thành viên</strong><span>Tích 1 điểm cho mỗi 10.000 ₫ chi tiêu phiên máy. Đổi 100 điểm lấy 10.000 ₫ vào ví.</span></div><Button tone="secondary" disabled={member.locked || points < 100} onClick={() => toast(act.redeemMemberReward(memberId))}>Đổi 100 điểm</Button></div>
+    <div className="choice-title">Lịch sử khách hàng · {activity.length} hoạt động</div>
+    <div className="member-history">{activity.length ? activity.slice(0, 30).map((a, i) => <div key={`${a.time}-${i}`} className="member-history-row"><span className="history-mark" /><div><strong>{a.title}</strong><small>{a.detail}</small></div><time>{stamp(a.time)}</time></div>) : <div className="empty-state" style={{ minHeight: 110 }}><strong>Chưa có hoạt động</strong><span>Lịch sử phiên, đơn hàng và giao dịch sẽ hiển thị tại đây.</span></div>}</div>
+  </Modal>
 }
 
 /* ============================================================

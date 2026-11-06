@@ -237,7 +237,7 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
         sessions: x.sessions.map((p) => (p.id === sess.id ? { ...p, status: 'closed', end: now, fee: bill.fee, minutes: bill.minutes, invoiceId: code } : p)),
         orders: x.orders.map((o) => (o.sessionId === sess.id && o.status !== 'Đã hủy' ? { ...o, billed: true } : o)),
         machines: setMachine(x.machines, sess.machineId, 'empty'),
-        members: x.members.map((m) => (m.id === sess.memberId ? { ...m, last: now, balance: a.method === 'wallet' ? m.balance - bill.total : m.balance } : m)),
+        members: x.members.map((m) => (m.id === sess.memberId ? { ...m, last: now, points: (m.points ?? 0) + Math.floor(bill.total / 10000), balance: a.method === 'wallet' ? m.balance - bill.total : m.balance } : m)),
       }, 'Kết thúc phiên', sess.id, `${sess.machineId} · ${vnd(bill.total)}`))
       return ok(`Thanh toán ${vnd(bill.total)} đã được ghi nhận. Hóa đơn ${code}.`, code)
     },
@@ -250,7 +250,7 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       if (s.members.some((m) => m.phone.replace(/\s/g, '') === a.phone.replace(/\s/g, ''))) return fail('Số điện thoại đã tồn tại.')
       const max = Math.max(...s.members.map((m) => parseInt(m.id.slice(3), 10)))
       const id = `HV-${String(max + 1).padStart(5, '0')}`
-      commit((x) => addLog({ ...x, members: [{ id, name: a.name.trim(), phone: a.phone.trim(), balance: 0, last: Date.now(), locked: false }, ...x.members] }, 'Đăng ký hội viên', id, a.name.trim()))
+      commit((x) => addLog({ ...x, members: [{ id, name: a.name.trim(), phone: a.phone.trim(), balance: 0, last: Date.now(), locked: false, points: 0 }, ...x.members] }, 'Đăng ký hội viên', id, a.name.trim()))
       return ok(`Đã đăng ký hội viên ${id}.`, id)
     },
     topUp(memberId: string, amount: number, method: PayMethod): Result {
@@ -265,6 +265,14 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
         walletTx: [{ id: `NV-${nid(x)}`, memberId, amount, method, time: Date.now(), shiftId: x.shift.id }, ...x.walletTx],
       }, 'Nạp ví', memberId, `+${vnd(amount)}`))
       return ok(`Đã nạp ${vnd(amount)} vào ví ${m.name}.`)
+    },
+    redeemMemberReward(memberId: string): Result {
+      const m = ref.current.members.find((x) => x.id === memberId)
+      if (!m) return fail('Không tìm thấy hội viên.')
+      if (m.locked) return fail('Tài khoản đang bị khóa.')
+      if ((m.points ?? 0) < 100) return fail('Cần ít nhất 100 điểm để đổi 10.000 ₫ vào ví.')
+      commit((x) => addLog({ ...x, members: x.members.map((p) => p.id === memberId ? { ...p, points: (p.points ?? 0) - 100, balance: p.balance + 10000 } : p) }, 'Đổi điểm thành viên', memberId, '−100 điểm · +10.000 ₫ vào ví'))
+      return ok(`Đã đổi 100 điểm thành 10.000 ₫ vào ví ${m.name}.`)
     },
     toggleMemberLock(id: string): Result {
       if (!can('Quản lý')) return denied()

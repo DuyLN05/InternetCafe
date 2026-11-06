@@ -33,6 +33,8 @@ export interface Member {
   balance: number
   last: number
   locked: boolean
+  /** Điểm thành viên tích lũy; cũ state sẽ mặc định 0 khi dùng */
+  points?: number
 }
 
 export interface Product {

@@ -136,6 +136,22 @@
   .machine-grid { grid-template-columns: 1fr; }
 }
 
+/* Hồ sơ khách hàng, đổi thưởng và lịch sử trên điện thoại */
+.member-summary strong { font-size: 17px; }
+.member-reward { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; margin-top: 14px; border: 1px solid color-mix(in srgb, var(--cyan) 24%, var(--line)); background: linear-gradient(100deg, var(--cyan-soft), var(--surface-2)); }
+.member-reward > div { display: grid; gap: 4px; }.member-reward strong { font: 600 13px var(--font-display); }.member-reward span { color: var(--muted); font-size: 11px; line-height: 1.55; }
+.member-history { max-height: 330px; overflow: auto; border-top: 1px solid var(--line); }
+.member-history-row { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 12px 4px; border-bottom: 1px solid var(--line); }
+.history-mark { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan-soft); }
+.member-history-row > div { min-width: 0; display: grid; gap: 3px; }.member-history-row strong { font-size: 12px; }.member-history-row small, .member-history-row time { color: var(--muted); font-size: 10px; }.member-history-row small { overflow-wrap: anywhere; }.member-history-row time { text-align: right; }
+@media (max-width: 720px) {
+  .member-reward { align-items: stretch; flex-direction: column; }.member-reward .btn { width: 100%; }
+  .member-history-row { grid-template-columns: 10px minmax(0, 1fr); gap: 8px; }.member-history-row time { grid-column: 2; text-align: left; }
+  .toolbar .tabs { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }.toolbar .tabs::-webkit-scrollbar { display: none; }
+  .report-filters .btn, .page-head .button-row .btn { min-height: 42px; }
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+}
+
 /* ---------- In ấn (báo cáo / hóa đơn) ---------- */
 @media print {
   body::before, .sidebar, .topbar, .scrim, .toast-stack, .button-row, .toolbar, .modal-backdrop { display: none !important; }

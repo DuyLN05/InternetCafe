@@ -30,6 +30,12 @@ function BannerModal({ id, onClose }: { id?: string; onClose: () => void }) {
     <Modal size="lg" eyebrow="Quảng cáo" title={cur ? `Sửa banner · ${cur.id}` : 'Thêm banner'} onClose={onClose}
       footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Thêm banner'}</Button></>}>
       <ImagePicker max={2560} quality={0.96} title="Ảnh bìa banner" name={title || 'Banner mới'} cat="Game" value={image} onChange={setImage} />
+      <div className={`bn-edit-preview tone-${tone}`} aria-label="Xem trước banner">
+        {image && <><img className="bn-edit-backdrop" src={imgSrc(image)} alt="" /><img className="bn-edit-artwork" src={imgSrc(image)} alt="" /></>}
+        <div className="bn-edit-shade" />
+        <div className="bn-edit-copy"><span>{tag || 'NHÃN BANNER'}</span><strong>{title || 'Tiêu đề banner'}</strong>{subtitle && <small>{subtitle}</small>}{cta && <em>{cta}</em>}</div>
+        <span className="bn-edit-label">XEM TRƯỚC · 16:5</span>
+      </div>
       <p className="bn-hint">Gợi ý: ảnh bìa ngang (tỉ lệ khoảng 16:5, ví dụ 1920×600; web giữ tối đa 2560px để ảnh sắc nét). Chưa có ảnh thì banner dùng nền hiệu ứng theo màu đã chọn.</p>
       <div className="form-grid" style={{ marginTop: 8 }}>
         <TextField label="Nhãn" value={tag} onChange={setTag} placeholder="GAME MỚI, SỰ KIỆN…" />
@@ -63,7 +69,7 @@ export default function BannerSection() {
   const go = useCallback((d: number) => setI((v) => (n ? (v + d + n) % n : 0)), [n])
 
   useEffect(() => {
-    if (n < 2 || hover || modal || del) return
+    if (n < 2 || hover || modal || del || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const t = window.setTimeout(() => go(1), DELAY)
     return () => window.clearTimeout(t)
   }, [idx, n, hover, modal, del, go])
@@ -94,7 +100,10 @@ export default function BannerSection() {
           {list.map((b, k) => (
             <div key={b.id} className={`bn-slide tone-${b.tone} ${k === idx ? 'on' : ''}`} aria-hidden={k !== idx}>
               <div className="bn-bg">
-                {b.image ? <img src={imgSrc(b.image)} alt="" draggable={false} /> : <><i className="bn-orb a" /><i className="bn-orb b" /><i className="bn-orb c" /></>}
+                {b.image ? <>
+                  <img className="bn-backdrop" src={imgSrc(b.image)} alt="" draggable={false} />
+                  <img className="bn-artwork" src={imgSrc(b.image)} alt="" draggable={false} />
+                </> : <><i className="bn-orb a" /><i className="bn-orb b" /><i className="bn-orb c" /></>}
               </div>
               <div className="bn-grid" />
               <div className="bn-copy">

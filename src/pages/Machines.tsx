@@ -3,7 +3,7 @@ import { CheckoutModal, NewOrderModal, OpenSessionModal } from '../components/mo
 import { Badge, Button, Icon, Modal, PageHead, SearchBox, SelectField, Stat, Tabs, useToast } from '../components/ui'
 import { clock, hm, num, vnd } from '../lib/format'
 import type { PageId } from '../lib/nav'
-import { calcBill, shiftTotals, useNow, useStore } from '../lib/store'
+import { calcBill, sessionBudgetPlan, shiftTotals, useNow, useStore } from '../lib/store'
 import type { Machine } from '../lib/types'
 
 type ModalState = null | { t: 'open'; machineId?: string } | { t: 'detail'; machineId: string } | { t: 'pay'; sessionId: string } | { t: 'order'; machineId?: string }
@@ -71,6 +71,7 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
               {list.map((m, i) => {
                 const sess = openSessions.find((s) => s.machineId === m.id)
                 const bill = sess ? calcBill(state, sess, now) : null
+                const wallet = sess && (sess.memberId || sess.prepaidAmount !== undefined) ? sessionBudgetPlan(state, sess, now) : null
                 const tk = state.tickets.find((t) => t.machineId === m.id && t.status === 'open')
                 return (
                   <button key={m.id} className={`machine-card spot ${m.state}`} style={{ ['--i' as string]: i }} onClick={() => click(m)} aria-label={`${m.id} · ${STATE_TEXT[m.state]}`}>
@@ -87,6 +88,7 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
                       <span>{sess ? sess.customer : m.state === 'maintenance' ? tk?.issue : 'Nhấn để mở phiên'}</span>
                       {bill && <span className="fee">{vnd(bill.total)}</span>}
                     </div>
+                    {wallet && <span className={`wallet-time ${wallet.remainingMs <= 5 * 60_000 ? 'urgent' : ''}`}>{sess?.memberId ? 'Ví' : 'Tiền nạp'} còn khoảng {Math.max(0, Math.ceil(wallet.remainingMs / 60_000))} phút</span>}
                   </button>
                 )
               })}
@@ -101,12 +103,13 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
           <div className="session-list">
             {openSessions.map((s) => {
               const b = calcBill(state, s, now)
+              const wallet = s.memberId || s.prepaidAmount !== undefined ? sessionBudgetPlan(state, s, now) : null
               return (
                 <div className="session-row" key={s.id}>
-                  <div><strong>{s.machineId} · {s.customer}</strong><small>Mở lúc {hm(s.start)} · {s.openedBy}</small></div>
+                  <div><strong>{s.machineId} · {s.customer}</strong><small>Mở lúc {hm(s.start)} · {s.openedBy}</small>{wallet && <small className={wallet.remainingMs <= 5 * 60_000 ? 'wallet-warning' : ''}>{wallet.remainingMs <= 0 ? 'Đang tự kết thúc phiên' : `${s.memberId ? 'Ví' : 'Tiền nạp'} còn khoảng ${Math.ceil(wallet.remainingMs / 60_000)} phút chơi`}</small>}</div>
                   <div className="num"><strong style={{ fontFamily: 'var(--font-display)' }}>{clock(now - s.start)}</strong><small>{b.fnb ? `Máy ${vnd(b.fee)} + F&B ${vnd(b.fnb)}` : `${num(s.rate)} ₫/giờ`}</small></div>
                   <div className="cost">{vnd(b.total)}</div>
-                  <div className="row-actions"><Button size="sm" tone="ghost" onClick={() => setModal({ t: 'order', machineId: s.machineId })}>Gọi món</Button><Button size="sm" tone="secondary" onClick={() => setModal({ t: 'pay', sessionId: s.id })}>Kết thúc</Button></div>
+                  <div className="row-actions"><Button size="sm" tone="ghost" onClick={() => setModal({ t: 'detail', machineId: s.machineId })}>Chi tiết</Button><Button size="sm" tone="ghost" onClick={() => setModal({ t: 'order', machineId: s.machineId })}>Gọi món</Button><Button size="sm" tone="secondary" onClick={() => setModal({ t: 'pay', sessionId: s.id })}>Kết thúc</Button></div>
                 </div>
               )
             })}

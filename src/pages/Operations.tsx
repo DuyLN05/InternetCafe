@@ -6,6 +6,7 @@ import { roleRank, type Invoice, type Member, type Order, type PayMethod, type S
 import { calcBill, memberPoints, useNow, useStore } from '../lib/store'
 
 const METHOD: Record<PayMethod, string> = { cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' }
+const invoiceMethod = (i: Invoice) => i.settlementMethod && i.settlementMethod !== i.method ? `${METHOD[i.method]} + ${METHOD[i.settlementMethod]}` : METHOD[i.method]
 
 /* ============================================================
    Phiên sử dụng
@@ -145,7 +146,7 @@ function MemberProfile({ memberId, onClose }: { memberId: string; onClose: () =>
   const tier = points >= 1000 ? 'Kim cương' : points >= 500 ? 'Vàng' : points >= 100 ? 'Bạc' : 'Thành viên'
   const activity = [
     ...state.sessions.filter((s) => s.memberId === memberId).map((s) => ({ time: s.end ?? s.start, title: `Phiên ${s.id}`, detail: `${s.machineId} · ${clock((s.end ?? now) - s.start)}${s.fee ? ` · ${vnd(s.fee)}` : ''}` })),
-    ...state.invoices.filter((i) => i.memberId === memberId).map((i) => ({ time: i.time, title: `Hóa đơn ${i.id}`, detail: `${vnd(i.total)} · ${i.status === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}` })),
+    ...state.invoices.filter((i) => i.memberId === memberId).map((i) => ({ time: i.time, title: `Hóa đơn ${i.id}`, detail: `${vnd(i.total)} · ${i.status === 'paid' ? 'Đã thanh toán' : i.status === 'unpaid' ? `Còn nợ ${vnd(i.total - (i.paidAmount ?? 0))}` : 'Đã hoàn tiền'}` })),
     ...state.orders.filter((o) => o.customer === member.name).map((o) => ({ time: o.time, title: `Đơn ${o.id}`, detail: `${o.lines.map((l) => `${l.qty} × ${l.name}`).join(', ')} · ${vnd(o.total)}` })),
     ...state.walletTx.filter((t) => t.memberId === memberId).map((t) => ({ time: t.time, title: `Nạp ví ${t.id}`, detail: `+${vnd(t.amount)} · ${METHOD[t.method]}` })),
   ].sort((a, b) => b.time - a.time)
@@ -163,9 +164,10 @@ function MemberProfile({ memberId, onClose }: { memberId: string; onClose: () =>
 export function Invoices() {
   const { state, act, user } = useStore()
   const toast = useToast()
-  const [tab, setTab] = useState<'all' | 'paid' | 'refunded'>('all')
+  const [tab, setTab] = useState<'all' | 'paid' | 'refunded' | 'unpaid'>('all')
   const [q, setQ] = useState('')
   const [refund, setRefund] = useState<Invoice | null>(null)
+  const [collect, setCollect] = useState<Invoice | null>(null)
   const [retail, setRetail] = useState(false)
   const rows = state.invoices.filter((i) => (tab === 'all' || i.status === tab) && (!q || norm(`${i.id} ${i.customer} ${i.machineId ?? ''}`).includes(norm(q))))
   const canRefund = roleRank[user.role] >= 1
@@ -175,25 +177,46 @@ export function Invoices() {
     { head: 'Phí máy', cell: (i) => <span className="num">{i.machineFee ? vnd(i.machineFee) : '—'}</span>, right: true },
     { head: 'Sản phẩm', cell: (i) => <span className="num">{i.fnb ? vnd(i.fnb) : '—'}</span>, right: true },
     { head: 'Tổng cộng', cell: (i) => <span className="num" style={{ color: 'var(--text)', fontWeight: 600 }}>{vnd(i.total)}</span>, right: true },
-    { head: 'Thanh toán', cell: (i) => METHOD[i.method] },
+    { head: 'Thanh toán', cell: (i) => invoiceMethod(i) },
     { head: 'Thời điểm', cell: (i) => stamp(i.time) },
-    { head: 'Trạng thái', cell: (i) => i.status === 'paid' ? <Badge tone="empty">Đã thanh toán</Badge> : <Badge tone="danger">Đã hoàn tiền</Badge> },
-    { head: '', cell: (i) => i.status === 'paid' && <div className="row-actions"><Button size="sm" tone="ghost" icon="undo" disabled={!canRefund} title={canRefund ? undefined : 'Cần quyền Quản lý'} onClick={() => setRefund(i)}>Hoàn</Button></div> },
+    { head: 'Trạng thái', cell: (i) => i.status === 'paid' ? <div><Badge tone="empty">Đã thanh toán</Badge>{(i.changeDue ?? 0) > 0 && !i.changeReturned && <small className="wallet-warning" style={{ display: 'block', marginTop: 4 }}>Cần hoàn {vnd(i.changeDue!)}</small>}</div> : i.status === 'unpaid' ? <Badge tone="amber">Còn nợ {vnd(i.total - (i.paidAmount ?? 0))}</Badge> : <Badge tone="danger">Đã hoàn tiền</Badge> },
+    { head: '', cell: (i) => <div className="row-actions">{i.status === 'paid' && <Button size="sm" tone="ghost" icon="undo" disabled={!canRefund} title={canRefund ? undefined : 'Cần quyền Quản lý'} onClick={() => setRefund(i)}>Hoàn</Button>}{i.status === 'unpaid' && <Button size="sm" tone="secondary" onClick={() => setCollect(i)}>Thu nợ</Button>}{(i.changeDue ?? 0) > 0 && !i.changeReturned && <Button size="sm" tone="secondary" onClick={() => { const r = act.returnDepositChange(i.id); toast(r) }}>Hoàn tiền dư</Button>}</div> },
   ]
   return (
     <>
       <PageHead eyebrow="Thanh toán" title="Hóa đơn" actions={<Button icon="plus" onClick={() => setRetail(true)}>Bán lẻ tại quầy</Button>} />
       <div className="card card-flush">
         <div className="toolbar">
-          <Tabs value={tab} onChange={setTab} items={[{ value: 'all', label: 'Tất cả', count: state.invoices.length }, { value: 'paid', label: 'Đã thanh toán' }, { value: 'refunded', label: 'Đã hoàn tiền' }]} />
+          <Tabs value={tab} onChange={setTab} items={[{ value: 'all', label: 'Tất cả', count: state.invoices.length }, { value: 'unpaid', label: 'Còn nợ', count: state.invoices.filter((i) => i.status === 'unpaid').length }, { value: 'paid', label: 'Đã thanh toán' }, { value: 'refunded', label: 'Đã hoàn tiền' }]} />
           <SearchBox value={q} onChange={setQ} placeholder="Tìm số hóa đơn, khách, máy…" />
         </div>
         <DataTable key={tab + q + state.invoices.length} cols={cols} rows={rows} rowKey={(i) => i.id} />
       </div>
       <div className="note-line"><Icon name="shield" size={15} /> Hóa đơn đã thanh toán được bảo toàn dữ liệu và không thể xóa. Hoàn tiền phải do Quản lý phê duyệt và ghi rõ lý do.</div>
       {refund && <RefundModal invoice={refund} onClose={() => setRefund(null)} onDone={(r) => toast(r)} />}
+      {collect && <CollectInvoiceModal invoice={collect} onClose={() => setCollect(null)} onDone={(r) => toast(r)} />}
       {retail && <NewOrderModal onClose={() => setRetail(false)} />}
     </>
+  )
+}
+
+function CollectInvoiceModal({ invoice, onClose, onDone }: { invoice: Invoice; onClose: () => void; onDone: (r: ReturnType<ReturnType<typeof useStore>['act']['settleInvoice']>) => void }) {
+  const { act, state } = useStore()
+  const due = invoice.total - (invoice.paidAmount ?? 0)
+  const member = state.members.find((m) => m.id === invoice.memberId)
+  return (
+    <Modal size="sm" eyebrow="Thu phần còn nợ" title={invoice.id} onClose={onClose}
+      footer={(close) => <Button tone="ghost" onClick={close}>Đóng</Button>}>
+      <div className="form-stack">
+        <div className="alert-bar"><Icon name="alert" /><div><strong>Còn phải thu {vnd(due)}</strong><span>{invoice.customer} · Máy {invoice.machineId ?? '—'}</span></div></div>
+        <div className="choice-title">Chọn phương thức thu</div>
+        <div className="choice-grid">
+          <Button onClick={() => { const r = act.settleInvoice(invoice.id, 'cash'); onDone(r); if (r.ok) onClose() }}>Tiền mặt</Button>
+          <Button tone="secondary" onClick={() => { const r = act.settleInvoice(invoice.id, 'transfer'); onDone(r); if (r.ok) onClose() }}>Chuyển khoản</Button>
+          {member && <Button tone="ghost" disabled={member.balance < due} onClick={() => { const r = act.settleInvoice(invoice.id, 'wallet'); onDone(r); if (r.ok) onClose() }}>Ví · {vnd(member.balance)}</Button>}
+        </div>
+      </div>
+    </Modal>
   )
 }
 

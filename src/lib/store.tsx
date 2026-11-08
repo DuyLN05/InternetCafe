@@ -22,18 +22,37 @@ export function calcBill(s: State, sess: Session, now: number) {
   return { minutes, fee, orders, fnb, total: fee + fnb }
 }
 
+/** Maximum billable time a member balance or guest deposit can cover, including unbilled food orders. */
+export function sessionBudgetPlan(s: State, sess: Session, now = Date.now()) {
+  const member = s.members.find((m) => m.id === sess.memberId)
+  if ((!member && sess.prepaidAmount === undefined) || sess.status !== 'open') return null
+  const fnb = calcBill(s, sess, now).fnb
+  const budget = Math.max(0, (member?.balance ?? sess.prepaidAmount ?? 0) - fnb)
+  const maxCharge = Math.floor(budget / s.settings.roundMoney) * s.settings.roundMoney
+  let minutes = Math.floor(maxCharge * 60 / sess.rate)
+  while (minutes > 0 && calcFee(minutes * 60_000, sess.rate, s.settings.minMinutes, s.settings.roundMoney).fee > budget) minutes--
+  if (minutes < s.settings.minMinutes) minutes = 0
+  const deadline = minutes ? sess.start + minutes * 60_000 : now
+  return { deadline, minutes, remainingMs: deadline - now, budget }
+}
+
 export function shiftTotals(s: State) {
-  const inv = s.invoices.filter((i) => i.shiftId === s.shift.id && i.status === 'paid')
-  const by = (m: PayMethod) => inv.filter((i) => i.method === m)
-  const sum = (a: Invoice[]) => a.reduce((x, i) => x + i.total, 0)
+  const inv = s.invoices.filter((i) => i.status !== 'refunded')
+  const entries = inv.flatMap((i) => {
+    const payments = i.payments ?? (i.status === 'paid' ? [{ amount: i.total, method: i.method, time: i.time, shiftId: i.shiftId }] : [])
+    return payments.filter((p) => p.shiftId === s.shift.id)
+  })
+  const by = (m: PayMethod) => entries.filter((p) => p.method === m)
+  const sum = (a: typeof entries) => a.reduce((x, p) => x + p.amount, 0)
   const topCash = s.walletTx.filter((t) => t.shiftId === s.shift.id && t.method === 'cash').reduce((a, t) => a + t.amount, 0)
   const topTransfer = s.walletTx.filter((t) => t.shiftId === s.shift.id && t.method === 'transfer').reduce((a, t) => a + t.amount, 0)
+  const count = new Set(inv.filter((i) => (i.payments ?? (i.status === 'paid' ? [{ amount: i.total, method: i.method, time: i.time, shiftId: i.shiftId }] : [])).some((p) => p.shiftId === s.shift.id)).map((i) => i.id)).size
   const cash = sum(by('cash')) + topCash
   return {
     cash, cashCount: by('cash').length,
     transfer: sum(by('transfer')) + topTransfer, transferCount: by('transfer').length,
     wallet: sum(by('wallet')), walletCount: by('wallet').length,
-    revenue: sum(inv), count: inv.length,
+    revenue: sum(entries), count,
     expected: s.shift.openCash + cash,
   }
 }
@@ -191,10 +210,11 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
     log: (action: string, target: string, detail: string) => commit((s) => addLog(s, action, target, detail)),
 
     /* ---- Máy & phiên ---- */
-    openSession(a: { machineId: string; memberId?: string }): Result {
+    openSession(a: { machineId: string; memberId?: string; prepaidAmount?: number }): Result {
       const s = ref.current
       const m = s.machines.find((x) => x.id === a.machineId)
       if (!m || m.state !== 'empty') return fail('Máy không sẵn sàng (đang dùng hoặc đang bảo trì).')
+      if (a.memberId && (a.prepaidAmount ?? 0) > 0) return fail('Một phiên chỉ dùng số dư hội viên hoặc tiền nạp trước của khách vãng lai.')
       let mem: Member | undefined
       if (a.memberId) {
         mem = s.members.find((x) => x.id === a.memberId)
@@ -202,9 +222,12 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
         if (mem.locked) return fail('Tài khoản hội viên đang bị khóa.')
         if (s.sessions.some((x) => x.status === 'open' && x.memberId === mem!.id)) return fail('Hội viên này đang có một phiên khác đang mở.')
       }
+      if (a.prepaidAmount !== undefined && (!Number.isFinite(a.prepaidAmount) || a.prepaidAmount < 0)) return fail('Số tiền nạp trước không hợp lệ.')
+      if ((a.prepaidAmount ?? 0) > 0 && s.shift.status !== 'open') return fail('Hãy mở ca trước khi nhận tiền nạp trước của khách.')
       const id = `PS-${240500 + nid(s)}`
-      const sess: Session = { id, machineId: m.id, memberId: mem?.id, customer: mem?.name ?? 'Khách vãng lai', start: Date.now(), rate: m.rate, status: 'open', openedBy: me().name }
-      commit((x) => addLog({ ...x, sessions: [sess, ...x.sessions], machines: setMachine(x.machines, m.id, 'using') }, 'Mở phiên', id, `${m.id} · ${sess.customer}`))
+      const start = Date.now()
+      const sess: Session = { id, machineId: m.id, memberId: mem?.id, ...(a.prepaidAmount !== undefined && a.prepaidAmount > 0 ? { prepaidAmount: a.prepaidAmount, prepaidAt: start, prepaidShiftId: s.shift.id } : {}), customer: mem?.name ?? 'Khách vãng lai', start, rate: m.rate, status: 'open', openedBy: me().name }
+      commit((x) => addLog({ ...x, sessions: [sess, ...x.sessions], machines: setMachine(x.machines, m.id, 'using') }, 'Mở phiên', id, `${m.id} · ${sess.customer}${sess.prepaidAmount ? ` · Nạp trước ${vnd(sess.prepaidAmount)}` : ''}`))
       return ok(`Đã mở phiên ${id} cho máy ${m.id}.`, id)
     },
 
@@ -232,13 +255,21 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       const now = a.at ?? Date.now() // giờ chốt lúc mở màn thanh toán → số tiền không nhảy khi đang thu
       const bill = calcBill(s, sess, now)
       const mem = s.members.find((m) => m.id === sess.memberId)
+      const prepaidApplied = mem ? 0 : Math.min(sess.prepaidAmount ?? 0, bill.total)
+      const due = bill.total - prepaidApplied
       if (a.method === 'wallet') {
         if (!mem) return fail('Khách vãng lai không thể trừ số dư ví.')
         if (mem.balance < bill.total) return fail('Số dư ví không đủ — hãy nạp thêm hoặc chọn phương thức khác.')
       }
-      if (a.method === 'cash' && (a.tendered ?? bill.total) < bill.total) return fail('Tiền khách đưa chưa đủ.')
+      if (a.method === 'cash' && (a.tendered ?? due) < due) return fail('Tiền khách đưa chưa đủ.')
       const code = invoiceCode(s)
-      const inv: Invoice = { id: code, customer: sess.customer, machineId: sess.machineId, machineFee: bill.fee, fnb: bill.fnb, total: bill.total, method: a.method, status: 'paid', time: now, shiftId: s.shift.id, memberId: sess.memberId, by: me().name }
+      const changeDue = Math.max(0, (sess.prepaidAmount ?? 0) - bill.total)
+      const payments = [
+        ...(mem || !sess.prepaidAmount ? [] : [{ amount: sess.prepaidAmount, method: 'cash' as const, time: sess.prepaidAt ?? sess.start, shiftId: sess.prepaidShiftId ?? s.shift.id }]),
+        ...(!mem && changeDue > 0 ? [{ amount: -changeDue, method: 'cash' as const, time: now, shiftId: s.shift.id }] : []),
+        ...(due > 0 ? [{ amount: due, method: a.method, time: now, shiftId: s.shift.id }] : []),
+      ]
+      const inv: Invoice = { id: code, customer: sess.customer, machineId: sess.machineId, machineFee: bill.fee, fnb: bill.fnb, total: bill.total, paidAmount: bill.total, walletPaidAmount: a.method === 'wallet' ? bill.total : 0, ...(sess.prepaidAmount ? { changeDue, changeReturned: true } : {}), payments, method: prepaidApplied > 0 ? 'cash' : a.method, ...(prepaidApplied > 0 && due > 0 ? { settlementMethod: a.method } : {}), status: 'paid', time: now, shiftId: s.shift.id, memberId: sess.memberId, by: me().name }
       commit((x) => addLog({
         ...x,
         invoices: [inv, ...x.invoices],
@@ -247,7 +278,60 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
         machines: setMachine(x.machines, sess.machineId, 'empty'),
         members: x.members.map((m) => (m.id === sess.memberId ? { ...m, last: now, points: memberPoints(s, m.id) + Math.floor(bill.total / 10000), balance: a.method === 'wallet' ? m.balance - bill.total : m.balance } : m)),
       }, 'Kết thúc phiên', sess.id, `${sess.machineId} · ${vnd(bill.total)}`))
-      return ok(`Thanh toán ${vnd(bill.total)} đã được ghi nhận. Hóa đơn ${code}.`, code)
+      return ok(`Thanh toán ${vnd(bill.total)} đã được ghi nhận.${changeDue ? ` Hoàn lại ${vnd(changeDue)} tiền nạp dư.` : ''} Hóa đơn ${code}.`, code)
+    },
+
+    autoCloseSession(sessionId: string, at: number): Result {
+      const s = ref.current
+      const sess = s.sessions.find((x) => x.id === sessionId && x.status === 'open')
+      if (!sess) return fail('Phiên không còn mở.')
+      const member = s.members.find((m) => m.id === sess.memberId)
+      if (!member && sess.prepaidAmount === undefined) return fail('Phiên này không có số dư tự động thanh toán.')
+      const bill = calcBill(s, sess, at)
+      const paidAmount = Math.min(member?.balance ?? sess.prepaidAmount ?? 0, bill.total)
+      const status: Invoice['status'] = paidAmount >= bill.total ? 'paid' : 'unpaid'
+      const code = invoiceCode(s)
+      const payMethod: PayMethod = member ? 'wallet' : 'cash'
+      const changeDue = member ? 0 : Math.max(0, (sess.prepaidAmount ?? 0) - bill.total)
+      const payments = member
+        ? paidAmount ? [{ amount: paidAmount, method: payMethod, time: at, shiftId: s.shift.id }] : []
+        : [
+          ...(sess.prepaidAmount ? [{ amount: sess.prepaidAmount, method: 'cash' as const, time: sess.prepaidAt ?? sess.start, shiftId: sess.prepaidShiftId ?? s.shift.id }] : []),
+          ...(changeDue > 0 ? [{ amount: -changeDue, method: 'cash' as const, time: at, shiftId: s.shift.id }] : []),
+        ]
+      const inv: Invoice = { id: code, customer: sess.customer, machineId: sess.machineId, machineFee: bill.fee, fnb: bill.fnb, total: bill.total, paidAmount, walletPaidAmount: member ? paidAmount : 0, ...(sess.prepaidAmount ? { changeDue, changeReturned: changeDue === 0 } : {}), payments, method: payMethod, status, time: at, shiftId: s.shift.id, memberId: sess.memberId, by: me().name }
+      commit((x) => addLog({
+        ...x,
+        invoices: [inv, ...x.invoices],
+        sessions: x.sessions.map((p) => p.id === sess.id ? { ...p, status: 'closed', end: at, fee: bill.fee, minutes: bill.minutes, invoiceId: code } : p),
+        orders: x.orders.map((o) => o.sessionId === sess.id && o.status !== 'Đã hủy' ? { ...o, billed: true } : o),
+        machines: setMachine(x.machines, sess.machineId, 'empty'),
+        members: member ? x.members.map((m) => m.id === member.id ? { ...m, last: at, balance: Math.max(0, m.balance - paidAmount), points: memberPoints(s, m.id) + (status === 'paid' ? Math.floor(bill.total / 10000) : 0) } : m) : x.members,
+      }, member ? 'Tự kết thúc phiên do số dư ví' : 'Tự kết thúc phiên theo tiền nạp trước', sess.id, `${sess.machineId} · ${vnd(paidAmount)} đã thu · ${vnd(bill.total - paidAmount)} còn nợ${changeDue ? ` · Hoàn dư ${vnd(changeDue)}` : ''}`))
+      return ok(`${member ? 'Ví' : 'Tiền nạp trước'} đã hết; phiên ${sess.machineId} được tự kết thúc.${status === 'unpaid' ? ` Còn nợ ${vnd(bill.total - paidAmount)}.` : ''}${changeDue ? ` Cần hoàn dư ${vnd(changeDue)}.` : ''}`)
+    },
+
+    returnDepositChange(id: string): Result {
+      const inv = ref.current.invoices.find((x) => x.id === id)
+      if (!inv || !(inv.changeDue && inv.changeDue > 0) || inv.changeReturned) return fail('Không có tiền nạp dư cần hoàn.')
+      commit((x) => addLog({ ...x, invoices: x.invoices.map((p) => p.id === id ? { ...p, changeReturned: true } : p) }, 'Hoàn tiền nạp dư', id, vnd(inv.changeDue!)))
+      return ok(`Đã xác nhận hoàn ${vnd(inv.changeDue)} tiền nạp dư.`)
+    },
+
+    settleInvoice(id: string, method: Exclude<PayMethod, 'wallet'> | 'wallet'): Result {
+      const s = ref.current
+      const inv = s.invoices.find((x) => x.id === id && x.status === 'unpaid')
+      if (!inv) return fail('Không tìm thấy hóa đơn còn nợ.')
+      const due = inv.total - (inv.paidAmount ?? 0)
+      const member = s.members.find((m) => m.id === inv.memberId)
+      if (method === 'wallet' && (!member || member.balance < due)) return fail('Số dư ví chưa đủ để thu phần còn nợ.')
+      const now = Date.now()
+      commit((x) => addLog({
+        ...x,
+        invoices: x.invoices.map((p) => p.id === id ? { ...p, status: 'paid', paidAmount: p.total, walletPaidAmount: (p.walletPaidAmount ?? 0) + (method === 'wallet' ? due : 0), settlementMethod: method, payments: [...(p.payments ?? (p.paidAmount ? [{ amount: p.paidAmount, method: p.method, time: p.time, shiftId: p.shiftId }] : [])), { amount: due, method, time: now, shiftId: x.shift.id }], time: now, shiftId: x.shift.id, by: me().name } : p),
+        members: inv.memberId ? x.members.map((m) => m.id === inv.memberId ? { ...m, balance: m.balance - (method === 'wallet' ? due : 0), points: memberPoints(s, m.id) + Math.floor(inv.total / 10000) } : m) : x.members,
+      }, 'Thu phần còn nợ hóa đơn', id, `${vnd(due)} · ${method}`))
+      return ok(`Đã thu đủ ${vnd(due)} còn nợ.`)
     },
 
     /* ---- Hội viên & ví ---- */
@@ -342,10 +426,11 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       const inv = ref.current.invoices.find((x) => x.id === id)
       if (!inv || inv.status !== 'paid') return fail('Hóa đơn không hợp lệ để hoàn tiền.')
       if (reason.trim().length < 3) return fail('Phải nhập lý do hoàn tiền.')
+      const walletRefund = inv.walletPaidAmount ?? (inv.method === 'wallet' ? inv.total : 0)
       commit((x) => addLog({
         ...x,
         invoices: x.invoices.map((p) => (p.id === id ? { ...p, status: 'refunded', refundReason: reason.trim() } : p)),
-        members: inv.method === 'wallet' ? x.members.map((m) => (m.id === inv.memberId ? { ...m, balance: m.balance + inv.total } : m)) : x.members,
+        members: walletRefund > 0 ? x.members.map((m) => (m.id === inv.memberId ? { ...m, balance: m.balance + walletRefund } : m)) : x.members,
       }, 'Hoàn tiền', id, `${vnd(inv.total)} · ${reason.trim()}`))
       return ok(`Đã hoàn ${vnd(inv.total)} cho hóa đơn ${id}.`)
     },

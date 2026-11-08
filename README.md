@@ -38,7 +38,7 @@ Phím tắt: **Ctrl/⌘ + K** tìm nhanh · **Ctrl/⌘ + B** đóng/mở thanh b
 | Phiên sử dụng | Lịch sử + phiên đang mở, tính phí trực tiếp |
 | Đơn hàng | Tạo đơn vào phiên hoặc bán lẻ tại quầy, phục vụ/hủy (hoàn tồn kho) |
 | Hội viên | Đăng ký, nạp ví, khóa/mở khóa, cảnh báo số dư thấp |
-| Hóa đơn | Danh sách, hoàn tiền có lý do (Quản lý), không xóa |
+| Hóa đơn | Danh sách, thu phần còn nợ, hoàn tiền có lý do (Quản lý), không xóa |
 | Ca làm việc | Mở ca, kết ca, đối chiếu tiền mặt & chênh lệch |
 | Bảo trì | Báo sự cố (máy → bảo trì), đóng phiếu (máy → trống) |
 | Tổng hợp | Lối tắt tới mọi trang theo quyền |
@@ -49,6 +49,8 @@ Phím tắt: **Ctrl/⌘ + K** tìm nhanh · **Ctrl/⌘ + B** đóng/mở thanh b
 
 **Quy tắc nghiệp vụ đã cài** (theo README backend): phí tối thiểu 15 phút, làm tròn lên phút, tiền làm tròn lên 100đ;
 đơn giá lưu lúc mở phiên; số dư ví ≥ 0; tồn kho ≥ 0; không có máy mở 2 phiên; hóa đơn không xóa; kiểm tra quyền theo vai trò.
+
+**Số dư và tiền nạp trước:** hội viên được cảnh báo trước 5 phút và tự kết thúc phiên tại phút cuối cùng ví đủ thanh toán. Khi mở phiên khách vãng lai, nhân viên có thể nhập tiền nạp trước; số tiền này giới hạn thời gian chơi, được trừ vào hóa đơn và tiền dư được hoàn lại. Nếu khoản tối thiểu hoặc món đã gọi vượt số dư, máy được giải phóng và phần chưa thu lưu thành hóa đơn còn nợ. Đây là thao tác trong phần mềm; không tắt Windows hay điều khiển máy khách. Tự kết thúc phiên chạy khi ứng dụng đang mở và đồng bộ được với dữ liệu.
 
 ## Cấu trúc
 ```

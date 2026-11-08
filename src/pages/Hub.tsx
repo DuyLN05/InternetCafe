@@ -3,7 +3,7 @@ import { Button, Icon, Modal, PageHead, SelectField, TextArea, TextField, useToa
 import { vnd } from '../lib/format'
 import { imgSrc } from '../lib/remote'
 import { NAV, type PageId } from '../lib/nav'
-import { shiftTotals, useStore } from '../lib/store'
+import { sessionBudgetPlan, shiftTotals, useNow, useStore } from '../lib/store'
 import { roleRank, type Game } from '../lib/types'
 import BannerSection from './Banners'
 import { ImagePicker } from './Catalog'
@@ -34,8 +34,16 @@ function LightCard({ id, label, icon, hint, tone, meta, onGo }: { id: PageId; la
 
 export default function Hub({ go }: { go: (p: PageId) => void }) {
   const { state, user } = useStore()
+  const now = useNow()
   const t = shiftTotals(state)
   const using = state.machines.filter((m) => m.state === 'using').length
+  const empty = state.machines.filter((m) => m.state === 'empty').length
+  const trackedSessions = state.sessions.filter((s) => s.status === 'open' && (s.memberId || s.prepaidAmount !== undefined))
+  const expiring = trackedSessions.filter((s) => {
+    const plan = sessionBudgetPlan(state, s, now)
+    return plan !== null && plan.remainingMs > 0 && plan.remainingMs <= 5 * 60_000
+  }).length
+  const lowBalance = state.members.filter((m) => !m.locked && m.balance < state.settings.lowBalance).length
   const newOrders = state.orders.filter((o) => o.status === 'Mới').length
   const openTickets = state.tickets.filter((x) => x.status === 'open').length
   const lowStock = state.products.filter((p) => p.stock <= p.min).length
@@ -57,15 +65,23 @@ export default function Hub({ go }: { go: (p: PageId) => void }) {
 
   return (
     <>
-      <PageHead eyebrow="TỔNG HỢP · LỐI TẮT" title={`${greet}, ${user.name.split(' ').slice(-1)[0]}`} sub="Chọn một khu vực để bắt đầu — thẻ sẽ sáng lên khi bạn di chuột vào." />
+      <PageHead eyebrow="TỔNG HỢP · LỐI TẮT" title={`${greet}, ${user.name.split(' ').slice(-1)[0]}`} sub="Xem nhanh tình trạng quán, rồi chọn khu vực cần thao tác." />
+      <div className="hub-strip" aria-label="Tình trạng vận hành">
+        <button type="button" onClick={() => go('machines')} aria-label={`Máy đang dùng ${using} trên ${state.machines.length}; ${empty} máy trống`}>
+          <small>MÁY ĐANG DÙNG</small><strong>{using}<i>/{state.machines.length}</i></strong><span>{empty} máy trống · mở sơ đồ máy</span>
+        </button>
+        <button type="button" onClick={() => go('machines')} aria-label={`${expiring} phiên sắp hết giờ`}>
+          <small>PHIÊN SẮP HẾT GIỜ</small><strong className={expiring ? 'warn' : ''}>{expiring}</strong><span>{expiring ? 'Còn 5 phút hoặc ít hơn' : 'Chưa có phiên cần chú ý'}</span>
+        </button>
+        <button type="button" onClick={() => go('members')} aria-label={`${lowBalance} hội viên có số dư thấp`}>
+          <small>SỐ DƯ HỘI VIÊN THẤP</small><strong className={lowBalance ? 'warn' : ''}>{lowBalance}</strong><span>{lowBalance ? 'Xem danh sách để nhắc nạp' : 'Tất cả ví đang ổn'}</span>
+        </button>
+        <button type="button" onClick={() => go('dashboard')} aria-label={`Doanh thu ca ${vnd(t.revenue)}`}>
+          <small>DOANH THU CA</small><strong className="revenue">{vnd(t.revenue)}</strong><span>{state.shift.status === 'open' ? 'Ca đang mở · xem báo cáo' : 'Ca đã kết thúc'}</span>
+        </button>
+      </div>
       <BannerSection />
       <GamesSection />
-      <div className="hub-strip">
-        <div><small>MÁY ĐANG DÙNG</small><strong>{using}<i>/{state.machines.length}</i></strong></div>
-        <div><small>DOANH THU CA</small><strong>{vnd(t.revenue)}</strong></div>
-        <div><small>ĐƠN CHỜ</small><strong>{newOrders}</strong></div>
-        <div><small>CA LÀM VIỆC</small><strong className={state.shift.status === 'open' ? 'ok' : ''}>{state.shift.status === 'open' ? 'Đang mở' : 'Đã kết'}</strong></div>
-      </div>
       {groups.map((g) => (
         <section key={g} className="hub-group" style={{ ['--lc' as string]: GROUP_TONE[g] }}>
           <h2 className="hub-title"><span />{g}</h2>

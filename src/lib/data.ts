@@ -142,9 +142,12 @@ export function seed(): State {
     ],
     stockMoves, suppliers, shift, shifts, backups, history,
     banners: [
-      { id: 'BN-001', tag: 'GAME MỚI', title: 'Valorant · Mùa giải mới', subtitle: 'Màn hình 240Hz tại khu VIP — đặt máy cho cả đội ngay hôm nay.', cta: 'Xem game', tone: 'magenta' as const, gameId: 'GM-002' },
+      { id: 'BN-001', tag: 'GAME MỚI', title: 'Valorant · Mùa giải mới', subtitle: 'Màn hình 240Hz tại khu VIP — đặt máy cho cả đội ngay hôm nay.', cta: 'Xem game', tone: 'magenta' as const },
       { id: 'BN-002', tag: 'SỰ KIỆN', title: 'Giải đấu cuối tuần AltF4 Cup', subtitle: 'Counter-Strike 2 · 5v5 · Tổng giải thưởng 5.000.000 ₫.', cta: 'Tìm hiểu', tone: 'amber' as const, gameId: 'GM-003' },
       { id: 'BN-003', tag: 'KHUYẾN MÃI', title: 'Nạp 200K tặng 20K', subtitle: 'Áp dụng cho hội viên nạp ví trong tuần này, đồ uống giảm 10%.', cta: 'Chơi ngay', tone: 'cyan' as const },
+      { id: 'BN-006', tag: 'MOBA 5V5', title: 'Liên Minh Huyền Thoại', subtitle: "Lập đội, chinh phục Summoner's Rift", cta: 'Xem game', tone: 'cyan' as const, gameId: 'GM-001', image: 'uploads/banner-lol-ahri.jpg' },
+      { id: 'BN-007', tag: 'ĐẤU TRƯỜNG SINH TỒN', title: 'PUBG: BATTLEGROUNDS', subtitle: 'Lập đội và sống sót đến cuối trận', cta: 'Xem game', tone: 'amber' as const, gameId: 'GM-004', image: 'uploads/banner-pubg.jpg' },
+      { id: 'BN-008', tag: 'THẾ GIỚI MỞ', title: 'Grand Theft Auto V', subtitle: 'Khám phá Los Santos — chơi tại khu VIP', cta: 'Xem game', tone: 'violet' as const, gameId: 'GM-006', image: 'uploads/banner-gta.jpg' },
     ],
     games: [
       { id: 'GM-001', name: 'Liên Minh Huyền Thoại', genre: 'MOBA', desc: 'Đấu trường 5v5 chiến thuật, phòng đội hình sẵn cho nhóm bạn.', zone: 'Tất cả máy' as const, tone: 'cyan' as const },

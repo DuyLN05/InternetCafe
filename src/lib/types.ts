@@ -15,6 +15,10 @@ export interface Session {
   id: string
   machineId: string
   memberId?: string
+  /** Cash deposit provided by a walk-in customer before play starts. */
+  prepaidAmount?: number
+  prepaidAt?: number
+  prepaidShiftId?: string
   customer: string
   start: number
   end?: number
@@ -72,7 +76,14 @@ export interface Invoice {
   fnb: number
   total: number
   method: PayMethod
-  status: 'paid' | 'refunded'
+  status: 'paid' | 'refunded' | 'unpaid'
+  /** Amount already collected; differs from total for auto-closed wallet sessions. */
+  paidAmount?: number
+  walletPaidAmount?: number
+  settlementMethod?: PayMethod
+  payments?: { amount: number; method: PayMethod; time: number; shiftId: string }[]
+  changeDue?: number
+  changeReturned?: boolean
   time: number
   shiftId: string
   memberId?: string

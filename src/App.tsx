@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ThemeProvider, useTheme } from './components/theme'
 import { AccessDenied, Button, Icon, LightningTrail, Loader, Logo, Modal, TextField, ToastProvider, useGlobalEffects, usePopover, useToast } from './components/ui'
 import { ACCOUNTS } from './lib/data'
-import { dmy, hms, norm } from './lib/format'
+import { dmy, hms, norm, vnd } from './lib/format'
 import { NAV, canSee, useRoute, type PageId } from './lib/nav'
 import { fetchState } from './lib/remote'
 import { setBackend } from './lib/remote'
-import { StoreProvider, loadLocalState, mergeState, useNow, useStore, type Boot } from './lib/store'
+import { StoreProvider, loadLocalState, mergeState, sessionBudgetPlan, useNow, useStore, type Boot } from './lib/store'
 import { roleRank, type Role, type User } from './lib/types'
 import Hub from './pages/Hub'
 import Machines from './pages/Machines'
@@ -165,7 +165,8 @@ function Clock() {
    Shell: sidebar + topbar + trang (có hiệu ứng chuyển trang)
    ============================================================ */
 function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User; role: Role; setRole: (r: Role) => void; onLogout: () => void; firstEnter: boolean }) {
-  const { state, user, saveError, notice } = useStore()
+  const { state, user, act, saveError, notice } = useStore()
+  const now = useNow()
   const toastBar = useToast()
   const { theme, toggle } = useTheme()
   const [route, go] = useRoute()
@@ -185,6 +186,31 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
   const profile = usePopover()
   const bell = usePopover()
   const mainRef = useRef<HTMLElement>(null)
+  const warnedSessions = useRef(new Set<string>())
+
+  // Wallet sessions warn five minutes before their affordable time runs out, then close at the last payable minute.
+  useEffect(() => {
+    const open = state.sessions.filter((s) => s.status === 'open' && (s.memberId || s.prepaidAmount !== undefined))
+    const activeKeys = new Set(open.map((s) => s.id))
+    for (const key of warnedSessions.current) if (!activeKeys.has(key.split(':')[0])) warnedSessions.current.delete(key)
+    for (const session of open) {
+      const plan = sessionBudgetPlan(state, session, now)
+      if (!plan) continue
+      if (plan.remainingMs <= 0) {
+        const result = act.autoCloseSession(session.id, plan.deadline)
+        if (result.ok) {
+          toastBar({ ok: false, msg: result.msg })
+          if ('Notification' in window && Notification.permission === 'granted') { try { new Notification('Phiên chơi đã tự kết thúc', { body: `${session.machineId} · ${result.msg}` }) } catch { /* thông báo hệ thống không khả dụng */ } }
+        }
+      } else if (plan.remainingMs <= 5 * 60_000 && !warnedSessions.current.has(`${session.id}:${plan.deadline}`)) {
+        warnedSessions.current.add(`${session.id}:${plan.deadline}`)
+        const mins = Math.max(1, Math.ceil(plan.remainingMs / 60_000))
+        const msg = `${session.machineId}: ${session.memberId ? 'ví' : 'tiền nạp trước'} còn đủ khoảng ${mins} phút chơi. Hãy nhắc khách nạp thêm.`
+        toastBar({ ok: false, msg })
+        if ('Notification' in window && Notification.permission === 'granted') { try { new Notification('Sắp hết số dư chơi', { body: msg }) } catch { /* thông báo hệ thống không khả dụng */ } }
+      }
+    }
+  }, [state, act, now, toastBar])
 
   // Chuyển trang: trang cũ mờ đi → trang mới trượt vào lần lượt từng khối
   useEffect(() => {
@@ -211,12 +237,19 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
   const openTickets = state.tickets.filter((t) => t.status === 'open').length
   const lowStock = state.products.filter((p) => p.stock <= p.min).length
   const lowMem = state.members.filter((m) => !m.locked && m.balance < state.settings.lowBalance).length
+  const unpaidInvoices = state.invoices.filter((i) => i.status === 'unpaid')
+  const unpaidAmount = unpaidInvoices.reduce((sum, i) => sum + i.total - (i.paidAmount ?? 0), 0)
+  const changeDueInvoices = state.invoices.filter((i) => (i.changeDue ?? 0) > 0 && !i.changeReturned)
+  const expiringSessions = state.sessions.filter((s) => s.status === 'open' && (s.memberId || s.prepaidAmount !== undefined)).map((s) => ({ session: s, plan: sessionBudgetPlan(state, s, now) })).filter((x) => x.plan && x.plan.remainingMs > 0 && x.plan.remainingMs <= 5 * 60_000)
   const badge = (id: PageId): { n: number; amber?: boolean } | null =>
     id === 'orders' && newOrders ? { n: newOrders } : id === 'maintenance' && openTickets ? { n: openTickets, amber: true } : id === 'inventory' && lowStock ? { n: lowStock, amber: true } : id === 'members' && lowMem ? { n: lowMem, amber: true } : null
   const notifs = [
     newOrders && { tone: 'magenta', icon: 'cart', t: `${newOrders} đơn đang chờ phục vụ`, d: 'Mở mục Đơn hàng để xử lý', to: 'orders' as PageId },
     lowStock && roleRank[role] >= 1 && { tone: 'amber', icon: 'box', t: `${lowStock} sản phẩm sắp hết`, d: 'Dưới mức tồn tối thiểu', to: 'inventory' as PageId },
     lowMem && { tone: 'magenta', icon: 'users', t: `${lowMem} hội viên số dư thấp`, d: 'Nhắc khách nạp thêm', to: 'members' as PageId },
+    unpaidInvoices.length > 0 && { tone: 'amber', icon: 'receipt', t: `${unpaidInvoices.length} hóa đơn còn nợ`, d: `Chưa thu ${vnd(unpaidAmount)}`, to: 'invoices' as PageId },
+    changeDueInvoices.length > 0 && { tone: 'amber', icon: 'coin', t: `${changeDueInvoices.length} khoản nạp dư cần hoàn`, d: `Mở hóa đơn để xác nhận hoàn tiền`, to: 'invoices' as PageId },
+    ...expiringSessions.map(({ session, plan }) => ({ tone: 'amber', icon: 'clock', t: `${session.machineId} sắp hết tiền chơi`, d: `Còn khoảng ${Math.ceil((plan?.remainingMs ?? 0) / 60_000)} phút · ${session.customer}`, to: 'machines' as PageId })),
     openTickets && { tone: 'cyan', icon: 'wrench', t: `${openTickets} phiếu bảo trì đang mở`, d: 'Máy chờ sửa chữa', to: 'maintenance' as PageId },
   ].filter(Boolean) as { tone: string; icon: string; t: string; d: string; to: PageId }[]
 

@@ -222,3 +222,13 @@ body::before {
   .page { padding: 20px 16px 48px; }
   .title { font-size: 23px; }
 }
+@media (max-width: 440px) {
+  .topbar { gap: 6px; padding: 0 10px; }
+  .top-actions { gap: 5px; }
+  .top-actions > .cmd-btn { display: none; }
+  .breadcrumb { flex: 1; overflow: hidden; }
+  .breadcrumb strong { max-width: 86px; overflow: hidden; text-overflow: ellipsis; }
+  .top-spacer { display: none; }
+  .profile-btn { margin-left: 0; padding-left: 7px; }
+  .page { padding-right: 12px; padding-left: 12px; }
+}

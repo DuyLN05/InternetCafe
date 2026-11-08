@@ -179,8 +179,8 @@ export function Reports() {
         { head: 'Số hóa đơn', cell: (i) => i.id, className: 'code' },
         { head: 'Khách', cell: (i) => i.customer, className: 'strong' },
         { head: 'Tổng', cell: (i) => <span className="num">{vnd(i.total)}</span>, right: true },
-        { head: 'Thanh toán', cell: (i) => ({ cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' })[i.method] },
-        { head: 'Trạng thái', cell: (i) => (i.status === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền') },
+        { head: 'Thanh toán', cell: (i) => i.settlementMethod && i.settlementMethod !== i.method ? `${({ cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' })[i.method]} + ${{ cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' }[i.settlementMethod]}` : ({ cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' })[i.method] },
+        { head: 'Trạng thái', cell: (i) => (i.status === 'paid' ? 'Đã thanh toán' : i.status === 'unpaid' ? `Còn nợ ${vnd(i.total - (i.paidAmount ?? 0))}` : 'Đã hoàn tiền') },
         { head: 'Thời điểm', cell: (i) => stamp(i.time) },
       ]} rows={state.invoices} rowKey={(i) => i.id} /></div>}
       {type === 'stock' && <div className="card card-flush"><DataTable cols={[

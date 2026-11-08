@@ -224,10 +224,12 @@ export function TextField({ label, icon, error, hint, suffix, value, onChange, t
 export function NumberField({ label, icon, error, hint, suffix, value, onChange, placeholder, autoFocus }: {
   label?: string; icon?: string; error?: string; hint?: string; suffix?: string; value: number | null; onChange: (v: number | null) => void; placeholder?: string; autoFocus?: boolean
 }) {
+  const [focused, setFocused] = useState(false)
   return (
     <Shell label={label} error={error} hint={hint}>
       {icon && <Icon name={icon} size={16} />}
-      <input inputMode="numeric" autoFocus={autoFocus} placeholder={placeholder} value={value === null ? '' : num(value)}
+      <input inputMode="numeric" autoFocus={autoFocus} placeholder={placeholder} value={value === null ? '' : focused ? String(value) : num(value)}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         onChange={(e) => { const d = e.target.value.replace(/\D/g, ''); onChange(d ? parseInt(d, 10) : null) }} />
       {suffix && <span className="suffix">{suffix}</span>}
     </Shell>

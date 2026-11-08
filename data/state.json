@@ -1,4 +1,4 @@
-{"rev":45,"savedAt":"2026-11-06T04:12:25+01:00","state":{
+{"rev":75,"savedAt":"2026-11-08T05:55:02+01:00","state":{
  "machines": [
   {
    "id": "PC-01",
@@ -10,7 +10,7 @@
    "id": "PC-02",
    "zone": "VIP",
    "rate": 15000,
-   "state": "empty"
+   "state": "using"
   },
   {
    "id": "PC-03",
@@ -28,13 +28,13 @@
    "id": "PC-05",
    "zone": "VIP",
    "rate": 15000,
-   "state": "empty"
+   "state": "using"
   },
   {
    "id": "PC-06",
    "zone": "VIP",
    "rate": 15000,
-   "state": "using"
+   "state": "empty"
   },
   {
    "id": "PC-07",
@@ -52,7 +52,7 @@
    "id": "PC-09",
    "zone": "Thường",
    "rate": 10000,
-   "state": "using"
+   "state": "empty"
   },
   {
    "id": "PC-10",
@@ -75,14 +75,92 @@
  ],
  "sessions": [
   {
+   "id": "PS-240675",
+   "machineId": "PC-05",
+   "memberId": "HV-00213",
+   "customer": "Nguyễn Minh Khang",
+   "start": 1794113702190,
+   "rate": 15000,
+   "status": "open",
+   "openedBy": "Lê Chí Toàn"
+  },
+  {
+   "id": "PS-240673",
+   "machineId": "PC-05",
+   "memberId": "HV-00212",
+   "customer": "Lê Hoàng Nam",
+   "start": 1794113694419,
+   "rate": 15000,
+   "status": "closed",
+   "openedBy": "Lê Chí Toàn",
+   "end": 1794113693755,
+   "fee": 3800,
+   "minutes": 15,
+   "invoiceId": "HD-261108-51"
+  },
+  {
+   "id": "PS-240672",
+   "machineId": "PC-01",
+   "customer": "Khách vãng lai",
+   "start": 1794113617592,
+   "rate": 15000,
+   "status": "open",
+   "openedBy": "Lê Chí Toàn"
+  },
+  {
+   "id": "PS-240655",
+   "machineId": "PC-05",
+   "prepaidAmount": 3800,
+   "prepaidAt": 1794109943263,
+   "prepaidShiftId": "CA-001",
+   "customer": "Khách vãng lai",
+   "start": 1794109943263,
+   "rate": 15000,
+   "status": "closed",
+   "openedBy": "Lê Chí Toàn",
+   "end": 1794110843263,
+   "fee": 3800,
+   "minutes": 15,
+   "invoiceId": "HD-261108-49"
+  },
+  {
+   "id": "PS-240654",
+   "machineId": "PC-01",
+   "prepaidAmount": 12000,
+   "prepaidAt": 1794109922926,
+   "prepaidShiftId": "CA-001",
+   "customer": "Khách vãng lai",
+   "start": 1794109922926,
+   "rate": 15000,
+   "status": "closed",
+   "openedBy": "Lê Chí Toàn",
+   "end": 1794112802926,
+   "fee": 12000,
+   "minutes": 48,
+   "invoiceId": "HD-261108-50"
+  },
+  {
+   "id": "PS-240646",
+   "machineId": "PC-02",
+   "customer": "Khách vãng lai",
+   "start": 1794107967182,
+   "rate": 15000,
+   "status": "open",
+   "openedBy": "Lê Chí Toàn"
+  },
+  {
    "id": "PS-240518",
    "machineId": "PC-01",
    "memberId": "HV-00213",
    "customer": "Nguyễn Minh Khang",
    "start": 1793504481006,
    "rate": 15000,
-   "status": "open",
-   "openedBy": "Lê Nhật Duy"
+   "status": "closed",
+   "openedBy": "Lê Nhật Duy",
+   "end": 1794109069920,
+   "fee": 2519300,
+   "minutes": 10077,
+   "invoiceId": "HD-261108-46"
   },
   {
    "id": "PS-240519",
@@ -100,8 +178,12 @@
    "customer": "Trần Gia Huy",
    "start": 1793507001006,
    "rate": 15000,
-   "status": "open",
-   "openedBy": "Lê Nhật Duy"
+   "status": "closed",
+   "openedBy": "Lê Nhật Duy",
+   "end": 1793586201006,
+   "fee": 330000,
+   "minutes": 1320,
+   "invoiceId": "HD-261108-47"
   },
   {
    "id": "PS-240521",
@@ -109,8 +191,12 @@
    "customer": "Khách vãng lai",
    "start": 1793511441006,
    "rate": 10000,
-   "status": "open",
-   "openedBy": "Lê Nhật Duy"
+   "status": "closed",
+   "openedBy": "Lê Nhật Duy",
+   "end": 1794110032822,
+   "fee": 1662900,
+   "minutes": 9977,
+   "invoiceId": "HD-261108-48"
   },
   {
    "id": "PS-240517",
@@ -158,25 +244,28 @@
    "id": "HV-00214",
    "name": "Trần Gia Huy",
    "phone": "0912 345 678",
-   "balance": 245000,
-   "last": 1793507001006,
-   "locked": false
+   "balance": 51500000,
+   "last": 1793586201006,
+   "locked": false,
+   "points": 36
   },
   {
    "id": "HV-00213",
    "name": "Nguyễn Minh Khang",
    "phone": "0988 201 145",
-   "balance": 18000,
-   "last": 1793504481006,
-   "locked": false
+   "balance": 400000,
+   "last": 1794109069920,
+   "locked": false,
+   "points": 257
   },
   {
    "id": "HV-00212",
    "name": "Lê Hoàng Nam",
    "phone": "0904 721 889",
    "balance": 0,
-   "last": 1792907961006,
-   "locked": true
+   "last": 1794113693755,
+   "locked": false,
+   "points": 0
   },
   {
    "id": "HV-00211",
@@ -239,9 +328,9 @@
    "name": "Cà phê lon",
    "cat": "Nước giải khát",
    "price": 10000,
-   "stock": 4,
+   "stock": 3,
    "min": 10,
-   "sold": 9,
+   "sold": 10,
    "active": true,
    "image": "uploads/da44d7e1268411cc79d3.webp"
   },
@@ -369,6 +458,24 @@
  ],
  "orders": [
   {
+   "id": "DH-10669",
+   "machineId": "PC-03",
+   "sessionId": "PS-240519",
+   "customer": "Khách vãng lai",
+   "lines": [
+    {
+     "pid": "SP-003",
+     "name": "Cà phê lon",
+     "qty": 1,
+     "price": 10000
+    }
+   ],
+   "total": 10000,
+   "time": 1794113532912,
+   "status": "Đã phục vụ",
+   "billed": false
+  },
+  {
    "id": "DH-10528",
    "machineId": "PC-01",
    "sessionId": "PS-240518",
@@ -389,8 +496,8 @@
    ],
    "total": 51000,
    "time": 1793511261006,
-   "status": "Mới",
-   "billed": false
+   "status": "Đã phục vụ",
+   "billed": true
   },
   {
    "id": "DH-10527",
@@ -408,7 +515,7 @@
    "total": 15000,
    "time": 1793509641006,
    "status": "Đã phục vụ",
-   "billed": false
+   "billed": true
   },
   {
    "id": "DH-10526",
@@ -452,6 +559,151 @@
   }
  ],
  "invoices": [
+  {
+   "id": "HD-261108-51",
+   "customer": "Lê Hoàng Nam",
+   "machineId": "PC-05",
+   "machineFee": 3800,
+   "fnb": 0,
+   "total": 3800,
+   "paidAmount": 0,
+   "walletPaidAmount": 0,
+   "payments": [],
+   "method": "wallet",
+   "status": "unpaid",
+   "time": 1794113693755,
+   "shiftId": "CA-001",
+   "memberId": "HV-00212",
+   "by": "Lê Chí Toàn"
+  },
+  {
+   "id": "HD-261108-50",
+   "customer": "Khách vãng lai",
+   "machineId": "PC-01",
+   "machineFee": 12000,
+   "fnb": 0,
+   "total": 12000,
+   "paidAmount": 12000,
+   "walletPaidAmount": 0,
+   "changeDue": 0,
+   "changeReturned": true,
+   "payments": [
+    {
+     "amount": 12000,
+     "method": "cash",
+     "time": 1794109922926,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "cash",
+   "status": "paid",
+   "time": 1794112802926,
+   "shiftId": "CA-001",
+   "by": "Lê Chí Toàn"
+  },
+  {
+   "id": "HD-261108-49",
+   "customer": "Khách vãng lai",
+   "machineId": "PC-05",
+   "machineFee": 3800,
+   "fnb": 0,
+   "total": 3800,
+   "paidAmount": 3800,
+   "walletPaidAmount": 0,
+   "changeDue": 0,
+   "changeReturned": true,
+   "payments": [
+    {
+     "amount": 3800,
+     "method": "cash",
+     "time": 1794109943263,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "cash",
+   "status": "paid",
+   "time": 1794110843263,
+   "shiftId": "CA-001",
+   "by": "Lê Chí Toàn"
+  },
+  {
+   "id": "HD-261108-48",
+   "customer": "Khách vãng lai",
+   "machineId": "PC-09",
+   "machineFee": 1662900,
+   "fnb": 0,
+   "total": 1662900,
+   "paidAmount": 1662900,
+   "walletPaidAmount": 0,
+   "payments": [
+    {
+     "amount": 1662900,
+     "method": "cash",
+     "time": 1794110032822,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "cash",
+   "status": "paid",
+   "time": 1794110032822,
+   "shiftId": "CA-001",
+   "by": "Lê Chí Toàn"
+  },
+  {
+   "id": "HD-261108-47",
+   "customer": "Trần Gia Huy",
+   "machineId": "PC-06",
+   "machineFee": 330000,
+   "fnb": 15000,
+   "total": 345000,
+   "paidAmount": 345000,
+   "walletPaidAmount": 345000,
+   "payments": [
+    {
+     "amount": 345000,
+     "method": "wallet",
+     "time": 1793586201006,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "wallet",
+   "status": "paid",
+   "time": 1793586201006,
+   "shiftId": "CA-001",
+   "memberId": "HV-00214",
+   "by": "Lê Chí Toàn"
+  },
+  {
+   "id": "HD-261108-46",
+   "customer": "Nguyễn Minh Khang",
+   "machineId": "PC-01",
+   "machineFee": 2519300,
+   "fnb": 51000,
+   "total": 2570300,
+   "paidAmount": 2570300,
+   "walletPaidAmount": 18000,
+   "payments": [
+    {
+     "amount": 18000,
+     "method": "wallet",
+     "time": 1794109069920,
+     "shiftId": "CA-001"
+    },
+    {
+     "amount": 2552300,
+     "method": "cash",
+     "time": 1794113579781,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "wallet",
+   "status": "paid",
+   "time": 1794113579781,
+   "shiftId": "CA-001",
+   "memberId": "HV-00213",
+   "by": "Lê Chí Toàn",
+   "settlementMethod": "cash"
+  },
   {
    "id": "HD-250518-042",
    "customer": "Trần Gia Huy",
@@ -534,12 +786,21 @@
  ],
  "tickets": [
   {
+   "id": "BT-0059",
+   "machineId": "PC-04",
+   "issue": "Tai nghe không nhận",
+   "assignee": "Lê Văn Sơn",
+   "time": 1794108118123,
+   "status": "open"
+  },
+  {
    "id": "BT-0058",
    "machineId": "PC-04",
    "issue": "Bàn phím chập phím W",
    "assignee": "Lê Văn Sơn",
    "time": 1793489961006,
-   "status": "open"
+   "status": "closed",
+   "result": "Thay phím mới"
   },
   {
    "id": "BT-0057",
@@ -591,6 +852,285 @@
   }
  ],
  "logs": [
+  {
+   "id": 175,
+   "time": 1794113702190,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240675",
+   "detail": "PC-05 · Nguyễn Minh Khang"
+  },
+  {
+   "id": 174,
+   "time": 1794113694423,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tự kết thúc phiên do số dư ví",
+   "target": "PS-240673",
+   "detail": "PC-05 · 0 ₫ đã thu · 3.800 ₫ còn nợ"
+  },
+  {
+   "id": 173,
+   "time": 1794113694419,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240673",
+   "detail": "PC-05 · Lê Hoàng Nam"
+  },
+  {
+   "id": 172,
+   "time": 1794113617592,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240672",
+   "detail": "PC-01 · Khách vãng lai"
+  },
+  {
+   "id": 171,
+   "time": 1794113598521,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Phục vụ đơn",
+   "target": "DH-10669",
+   "detail": "PC-03"
+  },
+  {
+   "id": 170,
+   "time": 1794113579782,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Thu phần còn nợ hóa đơn",
+   "target": "HD-261108-46",
+   "detail": "2.552.300 ₫ · cash"
+  },
+  {
+   "id": 169,
+   "time": 1794113532913,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tạo đơn hàng",
+   "target": "DH-10669",
+   "detail": "1 sản phẩm · 10.000 ₫"
+  },
+  {
+   "id": 168,
+   "time": 1794112802943,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tự kết thúc phiên theo tiền nạp trước",
+   "target": "PS-240654",
+   "detail": "PC-01 · 12.000 ₫ đã thu · 0 ₫ còn nợ"
+  },
+  {
+   "id": 167,
+   "time": 1794110843376,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tự kết thúc phiên theo tiền nạp trước",
+   "target": "PS-240655",
+   "detail": "PC-05 · 3.800 ₫ đã thu · 0 ₫ còn nợ"
+  },
+  {
+   "id": 166,
+   "time": 1794110092554,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở khóa hội viên",
+   "target": "HV-00212",
+   "detail": "Lê Hoàng Nam"
+  },
+  {
+   "id": 165,
+   "time": 1794110092024,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Khóa hội viên",
+   "target": "HV-00212",
+   "detail": "Lê Hoàng Nam"
+  },
+  {
+   "id": 164,
+   "time": 1794110091201,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở khóa hội viên",
+   "target": "HV-00211",
+   "detail": "Phạm Bảo Châu"
+  },
+  {
+   "id": 163,
+   "time": 1794110090226,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Khóa hội viên",
+   "target": "HV-00211",
+   "detail": "Phạm Bảo Châu"
+  },
+  {
+   "id": 162,
+   "time": 1794110088373,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở khóa hội viên",
+   "target": "HV-00212",
+   "detail": "Lê Hoàng Nam"
+  },
+  {
+   "id": 161,
+   "time": 1794110082652,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00213",
+   "detail": "+400.000 ₫"
+  },
+  {
+   "id": 160,
+   "time": 1794110072530,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00214",
+   "detail": "+50.000.000 ₫"
+  },
+  {
+   "id": 159,
+   "time": 1794110065934,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00214",
+   "detail": "+500.000 ₫"
+  },
+  {
+   "id": 158,
+   "time": 1794110062084,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00214",
+   "detail": "+500.000 ₫"
+  },
+  {
+   "id": 157,
+   "time": 1794110058484,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00214",
+   "detail": "+500.000 ₫"
+  },
+  {
+   "id": 156,
+   "time": 1794110041528,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Kết thúc phiên",
+   "target": "PS-240521",
+   "detail": "PC-09 · 1.662.900 ₫"
+  },
+  {
+   "id": 155,
+   "time": 1794109943263,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240655",
+   "detail": "PC-05 · Khách vãng lai · Nạp trước 3.800 ₫"
+  },
+  {
+   "id": 154,
+   "time": 1794109922927,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240654",
+   "detail": "PC-01 · Khách vãng lai · Nạp trước 12.000 ₫"
+  },
+  {
+   "id": 153,
+   "time": 1794109069934,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tự kết thúc phiên do số dư ví",
+   "target": "PS-240520",
+   "detail": "PC-06 · 345.000 ₫ đã thu · 0 ₫ còn nợ"
+  },
+  {
+   "id": 152,
+   "time": 1794109069931,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Tự kết thúc phiên do số dư ví",
+   "target": "PS-240518",
+   "detail": "PC-01 · 18.000 ₫ đã thu · 2.552.300 ₫ còn nợ"
+  },
+  {
+   "id": 151,
+   "time": 1794108419950,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Khóa hội viên",
+   "target": "HV-00212",
+   "detail": "Lê Hoàng Nam"
+  },
+  {
+   "id": 150,
+   "time": 1794108418610,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở khóa hội viên",
+   "target": "HV-00212",
+   "detail": "Lê Hoàng Nam"
+  },
+  {
+   "id": 149,
+   "time": 1794108406671,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Nạp ví",
+   "target": "HV-00214",
+   "detail": "+100.000 ₫"
+  },
+  {
+   "id": 148,
+   "time": 1794108118123,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Báo sự cố",
+   "target": "BT-0059",
+   "detail": "PC-04 · Tai nghe không nhận"
+  },
+  {
+   "id": 147,
+   "time": 1794108100932,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Đóng phiếu bảo trì",
+   "target": "BT-0058",
+   "detail": "PC-04 · Thay phím mới"
+  },
+  {
+   "id": 146,
+   "time": 1794107967182,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Mở phiên",
+   "target": "PS-240646",
+   "detail": "PC-02 · Khách vãng lai"
+  },
+  {
+   "id": 145,
+   "time": 1794107939182,
+   "user": "Lê Chí Toàn",
+   "role": "Quản trị viên",
+   "action": "Phục vụ đơn",
+   "target": "DH-10528",
+   "detail": "PC-01"
+  },
   {
    "id": 144,
    "time": 1793934745112,
@@ -1035,6 +1575,54 @@
  ],
  "walletTx": [
   {
+   "id": "NV-161",
+   "memberId": "HV-00213",
+   "amount": 400000,
+   "method": "cash",
+   "time": 1794110082652,
+   "shiftId": "CA-001"
+  },
+  {
+   "id": "NV-160",
+   "memberId": "HV-00214",
+   "amount": 50000000,
+   "method": "cash",
+   "time": 1794110072530,
+   "shiftId": "CA-001"
+  },
+  {
+   "id": "NV-159",
+   "memberId": "HV-00214",
+   "amount": 500000,
+   "method": "cash",
+   "time": 1794110065934,
+   "shiftId": "CA-001"
+  },
+  {
+   "id": "NV-158",
+   "memberId": "HV-00214",
+   "amount": 500000,
+   "method": "cash",
+   "time": 1794110062084,
+   "shiftId": "CA-001"
+  },
+  {
+   "id": "NV-157",
+   "memberId": "HV-00214",
+   "amount": 500000,
+   "method": "cash",
+   "time": 1794110058484,
+   "shiftId": "CA-001"
+  },
+  {
+   "id": "NV-149",
+   "memberId": "HV-00214",
+   "amount": 100000,
+   "method": "cash",
+   "time": 1794108406670,
+   "shiftId": "CA-001"
+  },
+  {
    "id": "NV-0412",
    "memberId": "HV-00214",
    "amount": 200000,
@@ -1200,7 +1788,6 @@
    "cta": "Xem game",
    "tone": "magenta",
    "image": "uploads/518d74ec3647b9301392.webp",
-   "gameId": "GM-002",
    "id": "BN-001"
   },
   {
@@ -1214,22 +1801,52 @@
   },
   {
    "tag": "GAME MỚI",
-   "title": "Bình Nguyên Vô Tận",
-   "subtitle": "đại chiến",
+   "title": "Liên Quân Mobile",
+   "subtitle": "Đấu trường 5v5 — sẵn sàng vào trận",
    "cta": "Xem ngay",
    "tone": "violet",
-   "image": "uploads/7122071862e48811e460.webp",
+   "image": "uploads/lienquan-krixi-featured.jpg",
    "gameId": "GM-002",
    "id": "BN-004"
   },
   {
    "tag": "GAME MỚI",
-   "title": "THE GAMER",
-   "subtitle": "Đam Mê Bất Tân",
+   "title": "Dragonheir: Silent Gods",
+   "subtitle": "Khám phá thế giới giả tưởng",
    "cta": "Xem ngay",
    "tone": "violet",
    "image": "uploads/0bc2e31b12b3cab044b5.webp",
    "id": "BN-005"
+  },
+  {
+   "tag": "MOBA 5V5",
+   "title": "Liên Minh Huyền Thoại",
+   "subtitle": "Lập đội, chinh phục Summoner's Rift",
+   "cta": "Xem game",
+   "tone": "cyan",
+   "image": "uploads/banner-lol-ahri.jpg",
+   "gameId": "GM-001",
+   "id": "BN-006"
+  },
+  {
+   "tag": "ĐẤU TRƯỜNG SINH TỒN",
+   "title": "PUBG: BATTLEGROUNDS",
+   "subtitle": "Lập đội và sống sót đến cuối trận",
+   "cta": "Xem game",
+   "tone": "amber",
+   "image": "uploads/banner-pubg.jpg",
+   "gameId": "GM-004",
+   "id": "BN-007"
+  },
+  {
+   "tag": "THẾ GIỚI MỞ",
+   "title": "Grand Theft Auto V",
+   "subtitle": "Khám phá Los Santos — chơi tại khu VIP",
+   "cta": "Xem game",
+   "tone": "violet",
+   "image": "uploads/banner-gta.jpg",
+   "gameId": "GM-006",
+   "id": "BN-008"
   }
  ],
  "games": [
@@ -1335,5 +1952,5 @@
   "rateStd": 10000
  },
  "dayStart": 1793496441006,
- "seq": 144
+ "seq": 175
 }}

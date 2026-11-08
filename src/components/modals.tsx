@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { calcBill, useStore } from '../lib/store'
-import { clock, hms, dmy, norm, num, vnd } from '../lib/format'
+import { calcFee, clock, hms, dmy, norm, num, vnd } from '../lib/format'
 import type { PayMethod } from '../lib/types'
 import { Badge, Button, Icon, Modal, NumberField, ProductArt, SearchBox, SelectField, TextField, useToast } from './ui'
 
@@ -13,19 +13,22 @@ export function OpenSessionModal({ machineId, onClose }: { machineId?: string; o
   const free = state.machines.filter((m) => m.state === 'empty')
   const [mid, setMid] = useState(machineId ?? free[0]?.id ?? '')
   const [kind, setKind] = useState<'member' | 'guest'>('member')
+  const [deposit, setDeposit] = useState<number | null>(null)
   const [q, setQ] = useState('')
   const [memberId, setMemberId] = useState<string>('')
   const machine = state.machines.find((m) => m.id === mid)
   const member = state.members.find((m) => m.id === memberId)
+  const minSessionFee = machine ? calcFee(state.settings.minMinutes * 60_000, machine.rate, state.settings.minMinutes, state.settings.roundMoney).fee : 0
   const results = useMemo(() => {
     const k = norm(q.trim())
     return state.members.filter((m) => !k || norm(`${m.id} ${m.name} ${m.phone}`).includes(k)).slice(0, 4)
   }, [q, state.members])
   const low = member && member.balance < state.settings.lowBalance
-  const valid = !!machine && (kind === 'guest' || (!!member && !member.locked))
+  const estimatedMinutes = machine && (deposit ?? 0) > 0 ? Math.floor((deposit ?? 0) * 60 / machine.rate) : 0
+  const valid = !!machine && (kind === 'guest' || (!!member && !member.locked)) && !(kind === 'guest' && (deposit ?? 0) > 0 && state.shift.status !== 'open')
 
   const submit = (close: () => void) => {
-    const r = act.openSession({ machineId: mid, memberId: kind === 'member' ? memberId : undefined })
+    const r = act.openSession({ machineId: mid, memberId: kind === 'member' ? memberId : undefined, prepaidAmount: kind === 'guest' && (deposit ?? 0) > 0 ? deposit ?? undefined : undefined })
     toast(r)
     if (r.ok) close()
   }
@@ -67,7 +70,12 @@ export function OpenSessionModal({ machineId, onClose }: { machineId?: string; o
               {low && <div className="alert-bar"><Icon name="alert" /><div><strong>Số dư thấp</strong><span>Dưới {vnd(state.settings.lowBalance)} — nhắc khách nạp thêm trước khi mở phiên.</span></div></div>}
             </div>
           )}
-          <div className="info-note"><Icon name="shield" size={15} /> Phiên được nhân viên mở và kết thúc thủ công. Hệ thống không tự khóa/mở máy.</div>
+          {kind === 'guest' && <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+            <NumberField label="Số tiền khách nạp trước" icon="coin" suffix="₫" value={deposit} onChange={setDeposit} placeholder="Để trống nếu trả sau" hint={estimatedMinutes ? `Ước tính khoảng ${estimatedMinutes} phút theo đơn giá hiện tại. Tiền nạp trừ vào hóa đơn, phần dư sẽ hoàn lại.` : 'Tiền nạp được trừ vào hóa đơn khi kết thúc phiên; nếu còn dư, nhân viên hoàn lại cho khách.'} />
+            {(deposit ?? 0) > 0 && (deposit ?? 0) < minSessionFee && <div className="alert-bar danger"><Icon name="alert" /><div><strong>Tiền nạp thấp hơn mức chơi tối thiểu</strong><span>Phí tối thiểu hiện tại là {vnd(minSessionFee)}; phiên sẽ tự kết thúc sớm và phần thiếu ghi thành hóa đơn còn nợ.</span></div></div>}
+            {(deposit ?? 0) > 0 && state.shift.status !== 'open' && <div className="alert-bar danger"><Icon name="alert" /><div><strong>Chưa mở ca làm việc</strong><span>Mở ca trước khi nhận tiền nạp trước.</span></div></div>}
+          </div>}
+          <div className="info-note"><Icon name="shield" size={15} /> Phiên hội viên hoặc khách đã nạp trước được cảnh báo và tự kết thúc trong phần mềm khi số tiền chơi sắp hết; máy sẽ chuyển về trạng thái trống.</div>
         </>
       )}
     </Modal>
@@ -87,10 +95,13 @@ export function CheckoutModal({ sessionId, onClose }: { sessionId: string; onClo
   if (!sess) return null
   const bill = calcBill(state, sess, at)
   const member = state.members.find((m) => m.id === sess.memberId)
+  const prepaid = member ? 0 : Math.min(sess.prepaidAmount ?? 0, bill.total)
+  const due = bill.total - prepaid
+  const depositChange = Math.max(0, (sess.prepaidAmount ?? 0) - bill.total)
   const walletOk = !!member && member.balance >= bill.total
-  const given = tendered ?? bill.total
-  const change = given - bill.total
-  const quick = Array.from(new Set([bill.total, Math.ceil(bill.total / 10000) * 10000, 50000, 100000, 200000, 500000])).filter((v) => v >= bill.total).slice(0, 5)
+  const given = tendered ?? due
+  const change = given - due
+  const quick = Array.from(new Set([due, Math.ceil(due / 10000) * 10000, 50000, 100000, 200000, 500000])).filter((v) => v >= due).slice(0, 5)
 
   const pay = (close: () => void) => {
     const r = act.checkout({ sessionId, method, tendered: method === 'cash' ? given : undefined, at })
@@ -120,6 +131,8 @@ export function CheckoutModal({ sessionId, onClose }: { sessionId: string; onClo
           </div>
           <div className="pay-total"><span>TỔNG CỘNG</span><strong className="num">{vnd(bill.total)}</strong><small>Làm tròn lên {num(state.settings.roundMoney)} ₫ · đơn giá đã lưu lúc mở phiên</small></div>
 
+          {sess.prepaidAmount !== undefined && <div className="alert-bar" style={{ marginTop: 14 }}><Icon name="coin" /><div><strong>Đã nạp trước {vnd(sess.prepaidAmount)} · còn thu {vnd(due)}</strong><span>{depositChange ? `Hoàn lại ${vnd(depositChange)} tiền nạp dư khi thanh toán.` : 'Tiền nạp trước được trừ vào hóa đơn.'}</span></div></div>}
+
           <div className="choice-title">Phương thức thanh toán</div>
           <div className="payment-options">
             <button className={`pay-option ${method === 'cash' ? 'active' : ''}`} onClick={() => setMethod('cash')}><Icon name="coin" /><span>Tiền mặt</span>{method === 'cash' && <b><Icon name="check" size={13} /></b>}</button>
@@ -129,7 +142,7 @@ export function CheckoutModal({ sessionId, onClose }: { sessionId: string; onClo
 
           {method === 'cash' && (
             <div style={{ marginTop: 14 }}>
-              <NumberField label="Tiền khách đưa" suffix="₫" value={tendered} onChange={setTendered} placeholder={num(bill.total)} />
+              <NumberField label={prepaid ? 'Tiền khách đưa thêm' : 'Tiền khách đưa'} suffix="₫" value={tendered} onChange={setTendered} placeholder={num(due)} />
               <div className="quick-amounts">{quick.map((v) => <button key={v} className={`chip ${given === v ? 'active' : ''}`} onClick={() => setTendered(v)}>{v === bill.total ? 'Vừa đủ' : num(v)}</button>)}</div>
               <div className="change"><span>{change >= 0 ? 'TIỀN THỪA' : 'CÒN THIẾU'}</span><strong className={change < 0 ? 'short num' : 'num'}>{vnd(Math.abs(change))}</strong></div>
             </div>
@@ -142,6 +155,7 @@ export function CheckoutModal({ sessionId, onClose }: { sessionId: string; onClo
           <span>{state.settings.address}</span>
           <b>HÓA ĐƠN THANH TOÁN</b>
           <div className="receipt-row"><span>Phí máy · {clock(at - sess.start)}</span><strong>{num(bill.fee)}</strong></div>
+          {prepaid > 0 && <div className="receipt-row"><span>Đã nạp trước</span><strong>−{num(prepaid)}</strong></div>}
           {bill.orders.flatMap((o) => o.lines).map((l, i) => <div className="receipt-row" key={i}><span>{l.qty} × {l.name}</span><strong>{num(l.qty * l.price)}</strong></div>)}
           <div className="receipt-row total"><span>TỔNG CỘNG</span><strong>{vnd(bill.total)}</strong></div>
           <small>Thu ngân: {user.name}<br />{hms(at)} {dmy(at)}</small>

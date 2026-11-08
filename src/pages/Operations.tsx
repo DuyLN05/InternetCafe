@@ -3,7 +3,7 @@ import { AddMemberModal, CheckoutModal, NewOrderModal, TopUpModal } from '../com
 import { Badge, Button, DataTable, Icon, Modal, PageHead, SearchBox, Tabs, TextField, useToast, type Col } from '../components/ui'
 import { clock, norm, num, stamp, vnd } from '../lib/format'
 import { roleRank, type Invoice, type Member, type Order, type PayMethod, type Session } from '../lib/types'
-import { calcBill, useNow, useStore } from '../lib/store'
+import { calcBill, memberPoints, useNow, useStore } from '../lib/store'
 
 const METHOD: Record<PayMethod, string> = { cash: 'Tiền mặt', wallet: 'Trừ số dư', transfer: 'Chuyển khoản' }
 
@@ -137,13 +137,14 @@ export function Members() {
 
 function MemberProfile({ memberId, onClose }: { memberId: string; onClose: () => void }) {
   const { state, act } = useStore()
+  const now = useNow()
   const toast = useToast()
   const member = state.members.find((m) => m.id === memberId)
   if (!member) return null
-  const points = member.points ?? 0
+  const points = memberPoints(state, memberId)
   const tier = points >= 1000 ? 'Kim cương' : points >= 500 ? 'Vàng' : points >= 100 ? 'Bạc' : 'Thành viên'
   const activity = [
-    ...state.sessions.filter((s) => s.memberId === memberId).map((s) => ({ time: s.end ?? s.start, title: `Phiên ${s.id}`, detail: `${s.machineId} · ${clock((s.end ?? s.start) - s.start)}${s.fee ? ` · ${vnd(s.fee)}` : ''}` })),
+    ...state.sessions.filter((s) => s.memberId === memberId).map((s) => ({ time: s.end ?? s.start, title: `Phiên ${s.id}`, detail: `${s.machineId} · ${clock((s.end ?? now) - s.start)}${s.fee ? ` · ${vnd(s.fee)}` : ''}` })),
     ...state.invoices.filter((i) => i.memberId === memberId).map((i) => ({ time: i.time, title: `Hóa đơn ${i.id}`, detail: `${vnd(i.total)} · ${i.status === 'paid' ? 'Đã thanh toán' : 'Đã hoàn tiền'}` })),
     ...state.orders.filter((o) => o.customer === member.name).map((o) => ({ time: o.time, title: `Đơn ${o.id}`, detail: `${o.lines.map((l) => `${l.qty} × ${l.name}`).join(', ')} · ${vnd(o.total)}` })),
     ...state.walletTx.filter((t) => t.memberId === memberId).map((t) => ({ time: t.time, title: `Nạp ví ${t.id}`, detail: `+${vnd(t.amount)} · ${METHOD[t.method]}` })),

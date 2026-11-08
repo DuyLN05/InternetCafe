@@ -38,6 +38,14 @@ export function shiftTotals(s: State) {
   }
 }
 
+/** Existing records predate rewards. Credit points from their paid member invoices. */
+export function memberPoints(s: State, memberId: string) {
+  const member = s.members.find((m) => m.id === memberId)
+  if (!member) return 0
+  if (member.points !== undefined) return member.points
+  return s.invoices.filter((i) => i.memberId === memberId && i.status === 'paid').reduce((sum, i) => sum + Math.floor(i.total / 10000), 0)
+}
+
 /** Chuỗi 7 ngày: 6 ngày cũ (mẫu) + hôm nay tính từ hóa đơn thật */
 export function weekStats(s: State) {
   const today = s.invoices.filter((i) => i.status === 'paid' && i.time >= s.dayStart)
@@ -237,7 +245,7 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
         sessions: x.sessions.map((p) => (p.id === sess.id ? { ...p, status: 'closed', end: now, fee: bill.fee, minutes: bill.minutes, invoiceId: code } : p)),
         orders: x.orders.map((o) => (o.sessionId === sess.id && o.status !== 'Đã hủy' ? { ...o, billed: true } : o)),
         machines: setMachine(x.machines, sess.machineId, 'empty'),
-        members: x.members.map((m) => (m.id === sess.memberId ? { ...m, last: now, points: (m.points ?? 0) + Math.floor(bill.total / 10000), balance: a.method === 'wallet' ? m.balance - bill.total : m.balance } : m)),
+        members: x.members.map((m) => (m.id === sess.memberId ? { ...m, last: now, points: memberPoints(s, m.id) + Math.floor(bill.total / 10000), balance: a.method === 'wallet' ? m.balance - bill.total : m.balance } : m)),
       }, 'Kết thúc phiên', sess.id, `${sess.machineId} · ${vnd(bill.total)}`))
       return ok(`Thanh toán ${vnd(bill.total)} đã được ghi nhận. Hóa đơn ${code}.`, code)
     },
@@ -270,8 +278,9 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       const m = ref.current.members.find((x) => x.id === memberId)
       if (!m) return fail('Không tìm thấy hội viên.')
       if (m.locked) return fail('Tài khoản đang bị khóa.')
-      if ((m.points ?? 0) < 100) return fail('Cần ít nhất 100 điểm để đổi 10.000 ₫ vào ví.')
-      commit((x) => addLog({ ...x, members: x.members.map((p) => p.id === memberId ? { ...p, points: (p.points ?? 0) - 100, balance: p.balance + 10000 } : p) }, 'Đổi điểm thành viên', memberId, '−100 điểm · +10.000 ₫ vào ví'))
+      const points = memberPoints(ref.current, memberId)
+      if (points < 100) return fail('Cần ít nhất 100 điểm để đổi 10.000 ₫ vào ví.')
+      commit((x) => addLog({ ...x, members: x.members.map((p) => p.id === memberId ? { ...p, points: points - 100, balance: p.balance + 10000 } : p) }, 'Đổi điểm thành viên', memberId, '−100 điểm · +10.000 ₫ vào ví'))
       return ok(`Đã đổi 100 điểm thành 10.000 ₫ vào ví ${m.name}.`)
     },
     toggleMemberLock(id: string): Result {

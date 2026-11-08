@@ -2,17 +2,17 @@ import { useState } from 'react'
 import { Button, DataTable, Icon, PageHead, SelectField, Stat, TextField, useToast, type Col } from '../components/ui'
 import { downloadCsv, num, stamp, vnd } from '../lib/format'
 import type { PageId } from '../lib/nav'
-import { shiftTotals, useNow, useStore, weekStats } from '../lib/store'
+import { memberPoints, shiftTotals, useNow, useStore, weekStats } from '../lib/store'
 import type { DayStat } from '../lib/types'
 
 const mil = (v: number) => (v === 0 ? '0' : `${(v / 1e6).toFixed(1).replace('.0', '')}tr`)
 
-export function RevenueChart({ data }: { data: DayStat[] }) {
+export function RevenueChart({ data, label = 'Biểu đồ doanh thu 7 ngày' }: { data: DayStat[]; label?: string }) {
   const rawMax = Math.max(...data.map((d) => d.machine + d.fnb), 1)
   const step = Math.pow(10, Math.floor(Math.log10(rawMax)))
   const max = Math.ceil(rawMax / step / 2) * step * 2 // trần "đẹp" cho trục Y
   return (
-    <div className="chart" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
+    <div className="chart" role="img" aria-label={label}>
       <div className="y-labels">{[1, 0.75, 0.5, 0.25, 0].map((f) => <span key={f}>{mil(max * f)}</span>)}</div>
       <div className="bars">
         {data.map((d, i) => {
@@ -141,7 +141,7 @@ export function Reports() {
   const dayRows = [...dayGroups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([d, v]) => ({ d: d.slice(5), ...v, total: v.machine + v.fnb }))
   const chartData: DayStat[] = dayRows.map(({ d, machine, fnb }) => ({ d, machine, fnb }))
   const sessions = state.sessions.filter((s) => inPeriod(s.start) && (!staffName || s.openedBy === staffName))
-  const memberRank = (m: typeof state.members[number]) => (m.points ?? 0) >= 1000 ? 'Kim cương' : (m.points ?? 0) >= 500 ? 'Vàng' : (m.points ?? 0) >= 100 ? 'Bạc' : 'Thành viên'
+  const memberRank = (m: typeof state.members[number]) => memberPoints(state, m.id) >= 1000 ? 'Kim cương' : memberPoints(state, m.id) >= 500 ? 'Vàng' : memberPoints(state, m.id) >= 100 ? 'Bạc' : 'Thành viên'
 
   const exportCsv = () => {
     if (type === 'revenue') downloadCsv('bao-cao-doanh-thu.csv', [['Ngày', 'Doanh thu máy', 'F&B', 'Tổng'], ...dayRows.map((d) => [d.d, d.machine, d.fnb, d.total])])
@@ -167,12 +167,11 @@ export function Reports() {
           <TextField label="Đến ngày" type="date" value={to} onChange={setTo} />
           <SelectField label="Nhân viên" value={staff} onChange={setStaff} options={[{ value: 'all', label: 'Tất cả nhân viên' }, ...state.staff.filter((s) => s.active).map((s) => ({ value: s.id, label: s.name }))]} />
           <SelectField label="Loại báo cáo" value={type} onChange={(v) => setType(v as typeof type)} options={[{ value: 'revenue', label: 'Tổng hợp doanh thu' }, { value: 'invoices', label: 'Danh sách hóa đơn' }, { value: 'stock', label: 'Tồn kho' }, { value: 'sessions', label: 'Phiên & công suất' }, { value: 'members', label: 'Hội viên & hạng' }]} />
-          <Button onClick={() => toast.show('success', 'Đã cập nhật báo cáo', `${from} — ${to}`)}>Áp dụng</Button>
         </div>
       </div>
       {type === 'revenue' && (
         <>
-          <div className="card spot"><div className="card-head"><div><span className="eyebrow">Doanh thu theo ngày trong kỳ</span><strong className="num">{vnd(dayRows.reduce((a, d) => a + d.total, 0))}</strong></div></div>{chartData.length ? <RevenueChart data={chartData} /> : <div className="empty-state" style={{ minHeight: 150 }}><strong>Không có doanh thu trong khoảng ngày này</strong></div>}</div>
+          <div className="card spot"><div className="card-head"><div><span className="eyebrow">Doanh thu theo ngày trong kỳ</span><strong className="num">{vnd(dayRows.reduce((a, d) => a + d.total, 0))}</strong></div></div>{chartData.length ? <RevenueChart data={chartData} label="Biểu đồ doanh thu theo ngày trong kỳ" /> : <div className="empty-state" style={{ minHeight: 150 }}><strong>Không có doanh thu trong khoảng ngày này</strong></div>}</div>
           <div className="card card-flush"><DataTable cols={dayCols} rows={dayRows} rowKey={(d) => d.d} /></div>
         </>
       )}
@@ -195,7 +194,7 @@ export function Reports() {
         { head: 'Mã phiên', cell: (s) => s.id, className: 'code' }, { head: 'Khách / Máy', cell: (s) => `${s.customer} · ${s.machineId}`, className: 'strong' }, { head: 'Nhân viên', cell: (s) => s.openedBy }, { head: 'Bắt đầu', cell: (s) => stamp(s.start) }, { head: 'Thời lượng', cell: (s) => <span className="num">{Math.round(((s.end ?? Date.now()) - s.start) / 60000)} phút</span>, right: true }, { head: 'Trạng thái', cell: (s) => s.status === 'open' ? 'Đang mở' : 'Đã kết thúc' },
       ]} rows={sessions} rowKey={(s) => s.id} />{sessions.length === 0 && <div className="empty-state"><strong>Không có phiên trong kỳ</strong></div>}</div>}
       {type === 'members' && <div className="card card-flush"><DataTable cols={[
-        { head: 'Mã hội viên', cell: (m) => m.id, className: 'code' }, { head: 'Hội viên', cell: (m) => m.name, className: 'strong' }, { head: 'Hạng', cell: memberRank }, { head: 'Điểm', cell: (m) => <span className="num">{m.points ?? 0}</span>, right: true }, { head: 'Số dư', cell: (m) => <span className="num">{vnd(m.balance)}</span>, right: true }, { head: 'Lần cuối', cell: (m) => stamp(m.last) },
+        { head: 'Mã hội viên', cell: (m) => m.id, className: 'code' }, { head: 'Hội viên', cell: (m) => m.name, className: 'strong' }, { head: 'Hạng', cell: memberRank }, { head: 'Điểm', cell: (m) => <span className="num">{memberPoints(state, m.id)}</span>, right: true }, { head: 'Số dư', cell: (m) => <span className="num">{vnd(m.balance)}</span>, right: true }, { head: 'Lần cuối', cell: (m) => stamp(m.last) },
       ]} rows={state.members} rowKey={(m) => m.id} /></div>}
     </>
   )

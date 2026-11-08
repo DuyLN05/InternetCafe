@@ -286,7 +286,10 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
     <div className={`app-shell ${firstEnter ? 'app-enter' : ''} ${collapsed ? 'collapsed' : ''}`}>
       {drawer && <div className="scrim" onClick={() => setDrawer(false)} />}
       <aside className={`sidebar ${drawer ? 'open' : ''}`}>
-        <div className="sidebar-brand"><Logo /><div className="brand-text"><div className="brand-name">ALT<span>F4</span></div><small className="brand-sub">GAMING CENTER</small></div></div>
+        <button type="button" className="sidebar-brand" aria-label="Về trang chủ" title="Về trang chủ" onClick={() => {
+          go('hub')
+          window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), route === 'hub' ? 0 : 200)
+        }}><Logo /><div className="brand-text"><div className="brand-name">ALT<span>F4</span></div><small className="brand-sub">GAMING CENTER</small></div></button>
         <div className="venue"><small>CHI NHÁNH ĐANG HOẠT ĐỘNG</small><strong>{state.settings.venue.toUpperCase()}</strong><span>{state.settings.address.split(',').slice(0, 2).join(',')}</span></div>
         <button className="edge-toggle" onClick={toggleSide} aria-label={collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'} title={collapsed ? 'Mở rộng (Ctrl+B)' : 'Thu gọn (Ctrl+B)'}><Icon name="arrow" size={14} /></button>
         <nav className="nav" aria-label="Điều hướng chính" onScroll={() => setTip(null)}>
@@ -355,6 +358,8 @@ function Shell({ account, role, setRole, onLogout, firstEnter }: { account: User
           <div key={view} className={`page-enter ${leaving ? 'page-exit' : ''}`}>{page}</div>
         </div>
       </main>
+
+      <button type="button" className="scroll-top-btn" aria-label="Cuộn lên đầu trang" title="Lên đầu trang" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}><Icon name="arrow" size={19} /></button>
 
       {palette && <Palette onClose={() => setPalette(false)} go={go} onLogout={onLogout} />}
       {pw && <PasswordModal onClose={() => setPw(false)} />}

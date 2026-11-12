@@ -3,6 +3,15 @@
 React 19 + Vite + Tailwind v4 (giữ nguyên bộ khung Figma Make). Phong cách HUD/cyber của bản thiết kế Figma, bổ sung
 **light / dark mode**, **hiệu ứng chuyển trang**, ripple khi click, spotlight theo con trỏ, đếm số động, biểu đồ có animation…
 
+## 👥 Thành viên nhóm Alt F4
+
+| STT | Họ và tên | MSSV | Vai trò |
+|:---:|---|:---:|---|
+| 1 | Lê Nhật Duy | 24210501005 | Trưởng nhóm |
+| 2 | Trương Thiện Thư | 24210501050 | Thành viên |
+| 3 | Lê Chí Toàn | 24210501038 | Thành viên |
+| 4 | Dương Hoàng Anh Chương | 24210501001 | Thành viên |
+
 ## Chạy dự án
 ```bash
 pnpm install      # hoặc npm install

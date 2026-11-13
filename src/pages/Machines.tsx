@@ -1,23 +1,26 @@
 import { useMemo, useState } from 'react'
 import { CheckoutModal, NewOrderModal, OpenSessionModal } from '../components/modals'
-import { Badge, Button, Icon, Modal, PageHead, SearchBox, SelectField, Stat, Tabs, useToast } from '../components/ui'
+import { Badge, Button, Icon, Modal, NumberField, PageHead, SearchBox, SelectField, Stat, Tabs, TextField, useToast } from '../components/ui'
 import { clock, hm, num, vnd } from '../lib/format'
 import type { PageId } from '../lib/nav'
 import { calcBill, sessionBudgetPlan, shiftTotals, useNow, useStore } from '../lib/store'
 import type { Machine } from '../lib/types'
+import { roleRank } from '../lib/types'
 
 type ModalState = null | { t: 'open'; machineId?: string } | { t: 'detail'; machineId: string } | { t: 'pay'; sessionId: string } | { t: 'order'; machineId?: string }
 
 const STATE_TEXT = { empty: 'Trống', using: 'Đang sử dụng', maintenance: 'Bảo trì' } as const
 
 export default function Machines({ go }: { go: (p: PageId) => void }) {
-  const { state } = useStore()
+  const { state, user, act } = useStore()
   const now = useNow()
   const toast = useToast()
   const [zone, setZone] = useState<'all' | 'VIP' | 'Thường'>('all')
   const [status, setStatus] = useState<'all' | Machine['state']>('all')
   const [q, setQ] = useState('')
   const [modal, setModal] = useState<ModalState>(null)
+  const [machineEditor, setMachineEditor] = useState<null | { id?: string }>(null)
+  const isMgr = roleRank[user.role] >= 1
 
   const counts = useMemo(() => ({
     using: state.machines.filter((m) => m.state === 'using').length,
@@ -42,6 +45,7 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
         <div><span className="eyebrow cyan">Trung tâm vận hành / Live floor</span><h1 className="title">Sơ đồ máy</h1></div>
         <div className="button-row">
           <div className="ops-status"><span className="pulse" /><strong>{counts.maintenance ? 'HOẠT ĐỘNG · 1 MÁY BẢO TRÌ' : 'TẤT CẢ HOẠT ĐỘNG'}</strong></div>
+          {isMgr && <Button tone="secondary" icon="plus" onClick={() => setMachineEditor({})}>Thêm máy</Button>}
           <Button icon="plus" onClick={() => setModal({ t: 'open' })}>Mở phiên mới</Button>
         </div>
       </div>
@@ -74,7 +78,8 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
                 const wallet = sess && (sess.memberId || sess.prepaidAmount !== undefined) ? sessionBudgetPlan(state, sess, now) : null
                 const tk = state.tickets.find((t) => t.machineId === m.id && t.status === 'open')
                 return (
-                  <button key={m.id} className={`machine-card spot ${m.state}`} style={{ ['--i' as string]: i }} onClick={() => click(m)} aria-label={`${m.id} · ${STATE_TEXT[m.state]}`}>
+                  <div key={m.id} className="machine-card-wrap" style={{ ['--i' as string]: i }}>
+                  <button className={`machine-card spot ${m.state}`} onClick={() => click(m)} aria-label={`${m.id} · ${STATE_TEXT[m.state]}`}>
                     <div className="machine-scan" />
                     <div className="machine-top">
                       <div className="machine-icon"><Icon name={m.state === 'maintenance' ? 'wrench' : 'monitor'} size={21} /></div>
@@ -90,6 +95,11 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
                     </div>
                     {wallet && <span className={`wallet-time ${wallet.remainingMs <= 5 * 60_000 ? 'urgent' : ''}`}>{sess?.memberId ? 'Ví' : 'Tiền nạp'} còn khoảng {Math.max(0, Math.ceil(wallet.remainingMs / 60_000))} phút</span>}
                   </button>
+                  {isMgr && <div className="machine-admin-actions" aria-label={`Quản lý ${m.id}`}>
+                    <button className="icon-btn sm" disabled={m.state !== 'empty'} title={m.state === 'empty' ? 'Sửa máy' : 'Chỉ sửa máy đang trống'} aria-label={`Sửa máy ${m.id}`} onClick={() => setMachineEditor({ id: m.id })}><Icon name="edit" size={15} /></button>
+                    <button className="icon-btn sm danger" disabled={m.state !== 'empty'} title={m.state === 'empty' ? 'Xóa máy' : 'Chỉ xóa máy đang trống'} aria-label={`Xóa máy ${m.id}`} onClick={() => { if (!window.confirm(`Xóa máy ${m.id}?`)) return; toast(act.deleteMachine(m.id)) }}><Icon name="trash" size={15} /></button>
+                  </div>}
+                  </div>
                 )
               })}
             </div>
@@ -121,8 +131,22 @@ export default function Machines({ go }: { go: (p: PageId) => void }) {
       {modal?.t === 'pay' && <CheckoutModal sessionId={modal.sessionId} onClose={() => setModal(null)} />}
       {modal?.t === 'order' && <NewOrderModal machineId={modal.machineId} onClose={() => setModal(null)} />}
       {modal?.t === 'detail' && <MachineDetail machineId={modal.machineId} onClose={() => setModal(null)} onPay={(id) => setModal({ t: 'pay', sessionId: id })} onOrder={(id) => setModal({ t: 'order', machineId: id })} />}
+      {machineEditor && <MachineEditor id={machineEditor.id} onClose={() => setMachineEditor(null)} />}
     </>
   )
+}
+
+function MachineEditor({ id, onClose }: { id?: string; onClose: () => void }) {
+  const { state, act } = useStore()
+  const toast = useToast()
+  const current = id ? state.machines.find((m) => m.id === id) : undefined
+  const [code, setCode] = useState(current?.id ?? '')
+  const [zone, setZone] = useState<Machine['zone']>(current?.zone ?? 'Thường')
+  const [rate, setRate] = useState<number | null>(current?.rate ?? state.settings.rateStd)
+  const save = (close: () => void) => { const r = current ? act.updateMachine({ id: current.id, zone, rate: rate ?? 0 }) : act.addMachine({ id: code, zone, rate: rate ?? 0 }); toast(r); if (r.ok) close() }
+  return <Modal size="sm" eyebrow="Quản lý máy" title={current ? `Sửa máy ${current.id}` : 'Thêm máy'} onClose={onClose} footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => save(close)}>Lưu máy</Button></>}>
+    <div className="form-stack">{!current && <TextField label="Mã máy" value={code} onChange={setCode} placeholder="VD: PC-21" autoFocus />}<SelectField label="Khu vực" value={zone} onChange={(v) => setZone(v as Machine['zone'])} options={[{ value: 'Thường', label: 'Khu thường' }, { value: 'VIP', label: 'Khu VIP' }]} /><NumberField label="Đơn giá mỗi giờ" suffix="₫" value={rate} onChange={setRate} /></div>
+  </Modal>
 }
 
 function MachineDetail({ machineId, onClose, onPay, onOrder }: { machineId: string; onClose: () => void; onPay: (sessionId: string) => void; onOrder: (machineId: string) => void }) {

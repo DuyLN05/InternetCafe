@@ -457,6 +457,40 @@ function makeActions(ref: { current: State }, commit: Commit, userRef: { current
       commit((x) => addLog({ ...x, products: x.products.map((q) => (q.id === a.id ? { ...q, name: a.name.trim(), cat: a.cat, price: a.price, min: Math.max(0, a.min), image: a.image } : q)) }, 'Sửa sản phẩm', a.id, a.name.trim()))
       return ok(`Đã cập nhật ${a.name.trim()}.`)
     },
+    deleteProduct(id: string): Result {
+      if (!can('Quản lý')) return denied()
+      const p = ref.current.products.find((x) => x.id === id)
+      if (!p) return fail('Sản phẩm không tồn tại.')
+      commit((x) => addLog({ ...x, products: x.products.filter((q) => q.id !== id) }, 'Xóa sản phẩm', id, p.name))
+      return ok(`Đã xóa sản phẩm ${p.name}.`)
+    },
+    addMachine(a: { id: string; zone: Machine['zone']; rate: number }): Result {
+      if (!can('Quản lý')) return denied()
+      const id = a.id.trim().toUpperCase()
+      if (!/^[A-Z0-9-]{2,12}$/.test(id)) return fail('Mã máy gồm 2–12 ký tự chữ, số hoặc dấu gạch ngang.')
+      if (ref.current.machines.some((m) => norm(m.id) === norm(id))) return fail('Mã máy đã tồn tại.')
+      if (!(a.rate >= 1000)) return fail('Đơn giá mỗi giờ tối thiểu 1.000 ₫.')
+      commit((x) => addLog({ ...x, machines: [...x.machines, { id, zone: a.zone, rate: a.rate, state: 'empty' }] }, 'Thêm máy', id, `Khu ${a.zone} · ${vnd(a.rate)}/giờ`))
+      return ok(`Đã thêm máy ${id}.`, id)
+    },
+    updateMachine(a: { id: string; zone: Machine['zone']; rate: number }): Result {
+      if (!can('Quản lý')) return denied()
+      const m = ref.current.machines.find((x) => x.id === a.id)
+      if (!m) return fail('Máy không tồn tại.')
+      if (m.state !== 'empty') return fail('Chỉ có thể sửa máy đang trống.')
+      if (!(a.rate >= 1000)) return fail('Đơn giá mỗi giờ tối thiểu 1.000 ₫.')
+      commit((x) => addLog({ ...x, machines: x.machines.map((q) => q.id === a.id ? { ...q, zone: a.zone, rate: a.rate } : q) }, 'Sửa máy', a.id, `Khu ${a.zone} · ${vnd(a.rate)}/giờ`))
+      return ok(`Đã cập nhật máy ${a.id}.`)
+    },
+    deleteMachine(id: string): Result {
+      if (!can('Quản lý')) return denied()
+      const m = ref.current.machines.find((x) => x.id === id)
+      if (!m) return fail('Máy không tồn tại.')
+      if (m.state !== 'empty') return fail('Chỉ có thể xóa máy đang trống.')
+      if (ref.current.sessions.some((s) => s.machineId === id) || ref.current.tickets.some((t) => t.machineId === id)) return fail('Máy đã có lịch sử phiên hoặc bảo trì nên không thể xóa.')
+      commit((x) => addLog({ ...x, machines: x.machines.filter((q) => q.id !== id) }, 'Xóa máy', id, `Khu ${m.zone}`))
+      return ok(`Đã xóa máy ${id}.`)
+    },
     setProductImage(id: string, image?: string): Result {
       if (!can('Quản lý')) return denied()
       const p = ref.current.products.find((x) => x.id === id)

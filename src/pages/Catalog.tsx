@@ -27,6 +27,10 @@ export function Products() {
   const withImg = state.products.filter((p) => p.image).length
 
   const pickQuick = (id: string) => { quickId.current = id; quick.current?.click() }
+  const removeProduct = (p: Product) => {
+    if (!window.confirm(`Xóa sản phẩm “${p.name}”? Tồn kho hiện tại: ${p.stock}. Lịch sử đơn hàng vẫn được giữ.`)) return
+    toast(act.deleteProduct(p.id))
+  }
   const onQuickFile = async (f?: File) => {
     if (!f) return
     try { toast(act.setProductImage(quickId.current, await prepareImage(f))) } catch (e) { toast({ ok: false, msg: (e as Error).message }) }
@@ -42,7 +46,7 @@ export function Products() {
     { head: 'Tồn kho', cell: (p) => <span className="num">{p.stock}</span>, right: true },
     { head: 'Đã bán', cell: (p) => <span className="num">{p.sold}</span>, right: true },
     { head: 'Trạng thái', cell: (p) => stockBadge(p) },
-    ...(isMgr ? [{ head: '', cell: (p: Product) => <button className="icon-btn sm" aria-label={`Sửa ${p.name}`} onClick={() => setModal({ t: 'edit', id: p.id })}><Icon name="edit" size={16} /></button>, right: true } as Col<Product>] : []),
+    ...(isMgr ? [{ head: 'Thao tác', cell: (p: Product) => <div className="row-actions"><button className="icon-btn sm" aria-label={`Sửa ${p.name}`} onClick={() => setModal({ t: 'edit', id: p.id })}><Icon name="edit" size={16} /></button><button className="icon-btn sm danger" aria-label={`Xóa ${p.name}`} onClick={() => removeProduct(p)}><Icon name="trash" size={16} /></button></div>, right: true } as Col<Product>] : []),
   ]
   return (
     <>
@@ -71,6 +75,7 @@ export function Products() {
                       <div className="menu-actions">
                         <button onClick={() => pickQuick(p.id)} title={p.image ? 'Đổi ảnh' : 'Thêm ảnh'} aria-label={`${p.image ? 'Đổi' : 'Thêm'} ảnh ${p.name}`}><Icon name={p.image ? 'image' : 'upload'} size={16} /></button>
                         <button onClick={() => setModal({ t: 'edit', id: p.id })} title="Sửa sản phẩm" aria-label={`Sửa ${p.name}`}><Icon name="edit" size={16} /></button>
+                        <button onClick={() => removeProduct(p)} title="Xóa sản phẩm" aria-label={`Xóa ${p.name}`}><Icon name="trash" size={16} /></button>
                       </div>
                     )}
                   </div>
@@ -147,7 +152,7 @@ function ProductModal({ id, onClose }: { id?: string; onClose: () => void }) {
   }
   return (
     <Modal size="lg" eyebrow="Danh mục" title={cur ? `Sửa sản phẩm · ${cur.id}` : 'Thêm sản phẩm'} onClose={onClose}
-      footer={(close) => <><Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Lưu sản phẩm'}</Button></>}>
+      footer={(close) => <>{cur && <Button tone="danger" onClick={() => { if (!window.confirm(`Xóa sản phẩm “${cur.name}”?`)) return; const r = act.deleteProduct(cur.id); toast(r); if (r.ok) close() }}>Xóa</Button>}<Button tone="ghost" onClick={close}>Hủy</Button><Button onClick={() => submit(close)}>{cur ? 'Lưu thay đổi' : 'Lưu sản phẩm'}</Button></>}>
       <ImagePicker name={name} cat={cat} value={image} onChange={setImage} />
       <div className="form-grid" style={{ marginTop: 18 }}>
         <div style={{ gridColumn: '1 / -1' }}><TextField label="Tên sản phẩm" value={name} onChange={setName} autoFocus={!cur} placeholder="VD: Trà sữa trân châu" /></div>

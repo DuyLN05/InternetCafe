@@ -41,6 +41,11 @@
 .ops-status strong { font: 600 11px var(--font-display); letter-spacing: 0.1em; color: var(--text-2); }
 .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); animation: live 1.8s infinite; flex-shrink: 0; }
 .machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 14px; }
+.machine-card-wrap { position: relative; min-width: 0; animation: rise 0.6s var(--ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
+.machine-card-wrap .machine-card { min-height: 232px; padding-bottom: 48px; animation: none; }
+.machine-admin-actions { position: absolute; right: 12px; bottom: 10px; z-index: 2; display: flex; gap: 6px; }
+.machine-admin-actions .icon-btn { background: var(--surface); }
+.machine-admin-actions .icon-btn:disabled { opacity: .35; cursor: not-allowed; }
 .machine-card {
   --c: var(--green); position: relative; overflow: hidden; text-align: left; width: 100%; min-height: 214px; padding: 16px;
   display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow-sm);

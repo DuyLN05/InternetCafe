@@ -1,4 +1,4 @@
-{"rev":75,"savedAt":"2026-11-08T05:55:02+01:00","state":{
+{"rev":78,"savedAt":"2026-11-13T03:55:57+01:00","state":{
  "machines": [
   {
    "id": "PC-01",
@@ -28,7 +28,7 @@
    "id": "PC-05",
    "zone": "VIP",
    "rate": 15000,
-   "state": "using"
+   "state": "empty"
   },
   {
    "id": "PC-06",
@@ -81,8 +81,12 @@
    "customer": "Nguyễn Minh Khang",
    "start": 1794113702190,
    "rate": 15000,
-   "status": "open",
-   "openedBy": "Lê Chí Toàn"
+   "status": "closed",
+   "openedBy": "Lê Chí Toàn",
+   "end": 1794209702190,
+   "fee": 400000,
+   "minutes": 1600,
+   "invoiceId": "HD-261113-52"
   },
   {
    "id": "PS-240673",
@@ -253,10 +257,10 @@
    "id": "HV-00213",
    "name": "Nguyễn Minh Khang",
    "phone": "0988 201 145",
-   "balance": 400000,
-   "last": 1794109069920,
+   "balance": 0,
+   "last": 1794209702190,
    "locked": false,
-   "points": 257
+   "points": 297
   },
   {
    "id": "HV-00212",
@@ -394,9 +398,9 @@
    "name": "Nước suối Aquafina",
    "cat": "Nước giải khát",
    "price": 8000,
-   "stock": 60,
+   "stock": 59,
    "min": 20,
-   "sold": 12,
+   "sold": 13,
    "active": true,
    "image": "uploads/d05e6a72de9891148344.webp"
   },
@@ -410,17 +414,6 @@
    "sold": 4,
    "active": true,
    "image": "uploads/1e3d5eb6019021aec582.webp"
-  },
-  {
-   "id": "SP-011",
-   "name": "Tai nghe gaming (cho thuê)",
-   "cat": "Thẻ & phụ kiện",
-   "price": 5000,
-   "stock": 10,
-   "min": 3,
-   "sold": 2,
-   "active": true,
-   "image": "uploads/071f2f9949c43ae19b87.webp"
   },
   {
    "id": "SP-012",
@@ -438,9 +431,9 @@
    "name": "Cá Viên Chiên",
    "cat": "Đồ ăn",
    "price": 30000,
-   "stock": 3,
+   "stock": 1,
    "min": 5,
-   "sold": 0,
+   "sold": 2,
    "active": true,
    "image": "uploads/235bd9b78304fda4a6b0.webp"
   },
@@ -457,6 +450,30 @@
   }
  ],
  "orders": [
+  {
+   "id": "DH-10678",
+   "machineId": "PC-01",
+   "sessionId": "PS-240672",
+   "customer": "Khách vãng lai",
+   "lines": [
+    {
+     "pid": "SP-013",
+     "name": "Cá Viên Chiên",
+     "qty": 2,
+     "price": 30000
+    },
+    {
+     "pid": "SP-009",
+     "name": "Nước suối Aquafina",
+     "qty": 1,
+     "price": 8000
+    }
+   ],
+   "total": 68000,
+   "time": 1794538556906,
+   "status": "Mới",
+   "billed": false
+  },
   {
    "id": "DH-10669",
    "machineId": "PC-03",
@@ -559,6 +576,30 @@
   }
  ],
  "invoices": [
+  {
+   "id": "HD-261113-52",
+   "customer": "Nguyễn Minh Khang",
+   "machineId": "PC-05",
+   "machineFee": 400000,
+   "fnb": 0,
+   "total": 400000,
+   "paidAmount": 400000,
+   "walletPaidAmount": 400000,
+   "payments": [
+    {
+     "amount": 400000,
+     "method": "wallet",
+     "time": 1794209702190,
+     "shiftId": "CA-001"
+    }
+   ],
+   "method": "wallet",
+   "status": "paid",
+   "time": 1794209702190,
+   "shiftId": "CA-001",
+   "memberId": "HV-00213",
+   "by": "Lê Chí Toàn"
+  },
   {
    "id": "HD-261108-51",
    "customer": "Lê Hoàng Nam",
@@ -852,6 +893,33 @@
   }
  ],
  "logs": [
+  {
+   "id": 178,
+   "time": 1794538556907,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Tạo đơn hàng",
+   "target": "DH-10678",
+   "detail": "2 sản phẩm · 68.000 ₫"
+  },
+  {
+   "id": 177,
+   "time": 1794538465716,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Xóa sản phẩm",
+   "target": "SP-011",
+   "detail": "Tai nghe gaming (cho thuê)"
+  },
+  {
+   "id": 176,
+   "time": 1794537978719,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Tự kết thúc phiên do số dư ví",
+   "target": "PS-240675",
+   "detail": "PC-05 · 400.000 ₫ đã thu · 0 ₫ còn nợ"
+  },
   {
    "id": 175,
    "time": 1794113702190,
@@ -1952,5 +2020,5 @@
   "rateStd": 10000
  },
  "dayStart": 1793496441006,
- "seq": 175
+ "seq": 178
 }}

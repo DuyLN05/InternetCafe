@@ -1,10 +1,10 @@
-{"rev":78,"savedAt":"2026-11-13T03:55:57+01:00","state":{
+{"rev":81,"savedAt":"2026-11-13T04:30:44+01:00","state":{
  "machines": [
   {
    "id": "PC-01",
    "zone": "VIP",
    "rate": 15000,
-   "state": "using"
+   "state": "empty"
   },
   {
    "id": "PC-02",
@@ -40,7 +40,7 @@
    "id": "PC-07",
    "zone": "Thường",
    "rate": 10000,
-   "state": "empty"
+   "state": "using"
   },
   {
    "id": "PC-08",
@@ -104,7 +104,7 @@
   },
   {
    "id": "PS-240672",
-   "machineId": "PC-01",
+   "machineId": "PC-07",
    "customer": "Khách vãng lai",
    "start": 1794113617592,
    "rate": 15000,
@@ -452,7 +452,7 @@
  "orders": [
   {
    "id": "DH-10678",
-   "machineId": "PC-01",
+   "machineId": "PC-07",
    "sessionId": "PS-240672",
    "customer": "Khách vãng lai",
    "lines": [
@@ -893,6 +893,33 @@
   }
  ],
  "logs": [
+  {
+   "id": 181,
+   "time": 1794540644288,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Chuyển máy",
+   "target": "PS-240672",
+   "detail": "PC-01 → PC-07"
+  },
+  {
+   "id": 180,
+   "time": 1794540638527,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Chuyển máy",
+   "target": "PS-240672",
+   "detail": "PC-05 → PC-01"
+  },
+  {
+   "id": 179,
+   "time": 1794540632845,
+   "user": "Lê Chí Toàn",
+   "role": "Quản lý",
+   "action": "Chuyển máy",
+   "target": "PS-240672",
+   "detail": "PC-01 → PC-05"
+  },
   {
    "id": 178,
    "time": 1794538556907,
@@ -2011,8 +2038,8 @@
  ],
  "settings": {
   "venue": "AltF4 Gaming Center",
-  "phone": "028 3821 2048",
-  "address": "45 Nguyễn Trãi, Quận 1, TP.HCM",
+  "phone": "0123 456 789",
+  "address": "Khu hành chính Zero Dam",
   "minMinutes": 15,
   "roundMoney": 100,
   "lowBalance": 20000,
@@ -2020,5 +2047,5 @@
   "rateStd": 10000
  },
  "dayStart": 1793496441006,
- "seq": 178
+ "seq": 181
 }}
